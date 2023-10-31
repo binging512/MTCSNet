@@ -64,47 +64,6 @@ def gen_voronoi(semantic,point_dict):
     vor_img = morphology.dilation(vor_img, kernel)
     return vor_img
 
-def gen_background_points_w_kmeans(img, point_dict, semantic, vor):
-    H,W,C = img.shape
-    pixels = img.reshape((-1,3)).astype(np.float32)
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 500, 0.1)
-    K = 10
-    cluster_list = [0,0,0,0,0,0,0,0,0,0]
-    _, labels, centers = cv2.kmeans(pixels, K, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
-    labels = labels.reshape((H,W))
-    for point_idx, point_prop in point_dict['foreground'].items():
-        select_point = point_prop['select_point']
-        cluster_idx = labels[select_point[1], select_point[0]]
-        cluster_list[cluster_idx] += 1
-    cluster_sorted_idx = np.argsort(np.array(cluster_list))
-        
-    bg_cluster = [cluster_sorted_idx[i] for i in range(5)]
-    mask = np.ones((H,W))
-    for bg_idx in bg_cluster:
-        mask[labels==bg_idx] = 0
-        
-    mask = morphology.opening(mask, morphology.disk(3))
-    mask = morphology.closing(mask, morphology.disk(3))
-    mask = morphology.erosion(mask, morphology.disk(3))
-    vor[vor==255]=1
-    mask = mask*vor
-        
-    new_point_dict = {'foreground':point_dict['foreground'], 'background':{}}
-    bg_point_num = len(list(point_dict['background'].keys()))
-    background_points = []
-    
-    semantic[semantic==128] = 1
-    while len(background_points)<bg_point_num:
-        x = random.randint(0, W-1)
-        y = random.randint(0, H-1)
-        if mask[y][x] == 0:
-            background_points.append([x,y])
-        
-        for ii, point in enumerate(background_points):
-            new_point_dict['background'][str(ii+1)] = {'x':int(point[0]),
-                                                       'y':int(point[1])}
-    return new_point_dict
-
 def gen_point_supervision(gt):
     point_dict = {"background":{}, "foreground":{}}
     region_props = measure.regionprops(gt)
@@ -120,7 +79,7 @@ def gen_point_supervision(gt):
             
         flag = 0
         attempt_num = 0
-        point_range = 0.0  # 0.05
+        point_range = 0.05  # 0.05
         while flag == 0:
             if attempt_num == 20:
                 point_range += 0.05
@@ -266,7 +225,7 @@ def gen_weak_label_with_point_fb(img, point_dict, superpixel, vor_img):
         
         if instance_dict['superpixels'][superpixel_value] > 0:
             repeat_foreground_superpixels.append(superpixel_value)
-            print("[Error] Warning: at least 2 foreground points are in the same superpixel!!!!!")
+            # print("[Error] Warning: at least 2 foreground points are in the same superpixel!!!!!")
             instance_dict['instances'][int(point_idx)] = [int(superpixel_value)]
             pass
         elif instance_dict['superpixels'][superpixel_value] == 0:
@@ -404,6 +363,85 @@ def gen_full_n_weak_heatmap(full_label, weak_label, weak_label_valid):
     weak_heat = weak_heat/np.max(weak_heat)*255
     return full_heat, weak_heat
 
+def change_bg_point_w_fusion(img, semantic, point_dict, distmap):
+    # Set local kernel
+    kernel_size = 11
+    conv_layer = nn.Conv2d(3,3, kernel_size, bias=False).eval()
+    conv_layer.weight = torch.nn.Parameter(torch.ones([3,3,kernel_size,kernel_size]))
+    
+    H,W,C = img.shape
+    # Fuse the local pixels
+    img_conv = conv_layer(torch.tensor(img,dtype=torch.float32).permute(2,0,1).unsqueeze(0)).squeeze(0).permute(1,2,0).detach().numpy()
+    # Cluster the fused pixels with kmeans
+    pixels = img_conv.reshape((-1,3)).astype(np.float32)
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 500, 0.1)
+    K = 10
+    cluster_list = [0,0,0,0,0,0,0,0,0,0]
+    _, labels, centers = cv2.kmeans(pixels, K, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
+    # Reshape the labels and make the label mask
+    labels = labels.reshape((H-(kernel_size-1),W-(kernel_size-1)))
+    labels_mask = np.zeros((H,W),dtype=np.int16)
+    labels_mask[int(kernel_size/2):H-int(kernel_size/2),int(kernel_size/2):W-int(kernel_size/2)] = labels
+    labels = labels_mask
+    # Count the foreground points in each label cluster
+    for point_idx, point_prop in point_dict['foreground'].items():
+        select_point = point_prop['select_point']
+        cluster_idx = labels[select_point[1], select_point[0]]
+        cluster_list[cluster_idx] += 1
+    cluster_sorted_idx = np.argsort(np.array(cluster_list))
+    # Select the 5 clusters with least foreground points as the background pixels
+    bg_cluster = [cluster_sorted_idx[i] for i in range(5)]
+    mask = np.ones((H,W))   # 1 as foreground and 0 as background
+    for bg_idx in bg_cluster:
+        mask[labels==bg_idx] = 0
+    # Morpholopy processing with background mask
+    mask = morphology.opening(mask, morphology.disk(3))
+    mask = morphology.closing(mask, morphology.disk(3))
+    mask = morphology.erosion(mask, morphology.disk(1))
+    # Restrict the mask with distmap
+    distmap[distmap==255]=1
+    mask = mask*distmap
+    mask[:int(kernel_size/2),:] = 1
+    mask[-int(kernel_size/2):,:] = 1
+    mask[:,:int(kernel_size/2)] = 1
+    mask[:,-int(kernel_size/2):] = 1
+    
+    # Check if the original points are in the new mask
+    ori_bg_dict = {'in_mask':[],'out_mask':[]}
+    for point_idx, point_prop in point_dict['background'].items():
+        point_x = point_prop['x']
+        point_y = point_prop['y']
+        ori_bg_value = mask[point_y, point_x]
+        if ori_bg_value == 1:
+            ori_bg_dict['in_mask'].append(point_prop)
+        else:
+            ori_bg_dict['out_mask'].append(point_prop)
+    print('Origin points: In mask point:{}. Out of mask point:{}'.format(len(ori_bg_dict['in_mask']), len(ori_bg_dict['out_mask'])))
+        
+    # Select the new background points and check if they are in the semantic foreground
+    bg_point_num = len(list(point_dict['background'].keys()))
+    background_points = []
+    new_bg_dict = {'in_mask':[], 'out_mask':[]}
+    semantic[semantic==128] = 1
+    while len(background_points)<bg_point_num:
+        x = random.randint(0, W-1)
+        y = random.randint(0, H-1)
+        if mask[y][x] == 0:
+            background_points.append([x,y])
+            if semantic[y][x] == 1:
+                new_bg_dict['in_mask'].append([x,y])
+            else:
+                new_bg_dict['out_mask'].append([x,y])
+    print("New points: In mask point:{}. Out of mask point:{}".format(len(new_bg_dict['in_mask']),len(new_bg_dict['out_mask'])))
+    
+    # Generate the new point dict
+    new_point_dict = {'foreground':point_dict['foreground'], 'background':{}}
+    for ii, point in enumerate(background_points):
+        new_point_dict['background'][str(ii+1)] = {'x':int(point[0]),
+                                                    'y':int(point[1])}
+        
+    return new_point_dict
+
 def recollect_files(data_root, img_dir, gt_dir):
     img_paths = sorted(glob.glob(os.path.join(data_root,'Slide_??/*.png'),recursive=True))
     gt_paths = [img_path.replace("Slide","GT") for img_path in img_paths]
@@ -417,7 +455,7 @@ def recollect_files(data_root, img_dir, gt_dir):
         gt = measure.label(gt)
         tif.imwrite(save_gt_path,gt)
     
-def preprocess_TNBC(img_dir, gt_dir, output_dir, train=True):
+def preprocess_TNBC(img_dir, gt_dir, output_dir, train=True,):
     print("Preprocessing the TNBC dataset...")
     output_img_dir = os.path.join(output_dir, 'images')
     output_superpixel_dir = os.path.join(output_dir, 'superpixels')
@@ -426,19 +464,16 @@ def preprocess_TNBC(img_dir, gt_dir, output_dir, train=True):
     output_vis_dir = os.path.join(output_dir, 'vis')
     output_point_dir = os.path.join(output_dir,'points')
     output_voronoi_dir = os.path.join(output_dir,'voronois')
-    output_full_dist_dir = os.path.join(output_dir,'labels/full_distmap')
-    output_weak_dist_dir = os.path.join(output_dir,'labels/weak_distmap')
     output_full_label_dir = os.path.join(output_dir,'labels/full')
     output_full_heatmap_dir = os.path.join(output_dir,'labels/full_heatmap')
+    output_full_dist_dir = os.path.join(output_dir,'labels/full_distmap')
     output_weak_label_dir = os.path.join(output_dir,'labels/weak')
     output_weak_heatmap_dir = os.path.join(output_dir,'labels/weak_heatmap')
+    output_weak_dist_dir = os.path.join(output_dir,'labels/weak_distmap')
     
     img_names = os.listdir(img_dir)
     for ii, img_name in enumerate(sorted(img_names)):
         print("Preprocessing the {}/{} images...".format(ii, len(img_names)), end='\r')
-        # check if done?
-        # if os.path.exists(os.path.join(output_weak_heatmap_dir, img_name)):
-        #     continue
         img_path = os.path.join(img_dir, img_name)
         gt_path = os.path.join(gt_dir, img_name.replace('.png','.tiff'))
         
@@ -465,13 +500,39 @@ def preprocess_TNBC(img_dir, gt_dir, output_dir, train=True):
         cv2.imwrite(save_vis_path, vis)
         
         if train:
-            # generate the point supervision
+            # Generate the initial point supervision
             point_dict = gen_point_supervision(gt.copy())
+
+            # Generate the voronoi images
+            vor_img = gen_voronoi(semantic.copy(), point_dict)
+            save_vor_path = os.path.join(output_voronoi_dir, img_name)
+            os.makedirs(os.path.dirname(save_vor_path), exist_ok=True)
+            cv2.imwrite(save_vor_path, vor_img)
+            
+            # Generate the full distmap labels
+            full_distmap = semantic.copy()
+            full_distmap[full_distmap==255]=0
+            full_distmap[full_distmap==128]=255
+            save_full_distmap_path = os.path.join(output_full_dist_dir, img_name)
+            os.makedirs(os.path.dirname(save_full_distmap_path),exist_ok=True)
+            cv2.imwrite(save_full_distmap_path, full_distmap)
+            
+            # Generate the initial weak distmap labels
+            weak_distmap = gen_dist_label(img, vor_img, point_dict)
+            
+            # Re-generate the point supervision with fusion methods
+            point_dict = change_bg_point_w_fusion(img, semantic.copy(), point_dict, weak_distmap)
             save_point_path = os.path.join(output_point_dir, img_name.replace('.png','.json'))
             os.makedirs(os.path.dirname(save_point_path), exist_ok=True)
             json.dump(point_dict, open(save_point_path,'w'), indent=2)
             
-            # generate the superpixels
+            # Re-generate the weak distmap labels
+            weak_distmap = gen_dist_label(img, vor_img, point_dict)
+            save_weak_distmap_path = os.path.join(output_weak_dist_dir, img_name)
+            os.makedirs(os.path.dirname(save_weak_distmap_path),exist_ok=True)
+            cv2.imwrite(save_weak_distmap_path, weak_distmap)
+            
+            # Generate the superpixels
             superpixel, sp_vis = gen_superpixel_adaptive(img, point_dict)
             save_superpixel_path = os.path.join(output_superpixel_dir, img_name.replace('.png','.tiff'))
             os.makedirs(os.path.dirname(save_superpixel_path), exist_ok=True)
@@ -480,27 +541,8 @@ def preprocess_TNBC(img_dir, gt_dir, output_dir, train=True):
             os.makedirs(os.path.dirname(save_sp_vis_path), exist_ok=True)
             cv2.imwrite(save_sp_vis_path, sp_vis)
             
-            # generate the voronoi images
-            vor_img = gen_voronoi(semantic.copy(), point_dict)
-            save_vor_path = os.path.join(output_voronoi_dir, img_name)
-            os.makedirs(os.path.dirname(save_vor_path), exist_ok=True)
-            cv2.imwrite(save_vor_path, vor_img)
-            
-            # generate the full distmap labels
-            full_distmap = semantic
-            full_distmap[full_distmap==255]=0
-            full_distmap[full_distmap==128]=255
-            save_full_distmap_path = os.path.join(output_full_dist_dir, img_name)
-            os.makedirs(os.path.dirname(save_full_distmap_path),exist_ok=True)
-            cv2.imwrite(save_full_distmap_path, full_distmap)
-            
-            weak_distmap = gen_dist_label(img, vor_img, point_dict)
-            save_weak_distmap_path = os.path.join(output_weak_dist_dir, img_name)
-            os.makedirs(os.path.dirname(save_weak_distmap_path),exist_ok=True)
-            cv2.imwrite(save_weak_distmap_path, weak_distmap)
-            
-            # generate the full label and heatmap
-            full_label, full_heat = gen_full_label_with_semantic(semantic)
+            # Generate the full label and heatmap
+            full_label, full_heat = gen_full_label_with_semantic(semantic.copy())
             save_full_label_path = os.path.join(output_full_label_dir, img_name)
             os.makedirs(os.path.dirname(save_full_label_path), exist_ok=True)
             cv2.imwrite(save_full_label_path, full_label)
@@ -508,7 +550,7 @@ def preprocess_TNBC(img_dir, gt_dir, output_dir, train=True):
             os.makedirs(os.path.dirname(save_full_heat_path), exist_ok=True)
             cv2.imwrite(save_full_heat_path, full_heat)
             
-            # generate the weak label and heatmap
+            # Generate the weak label and heatmap
             weak_label, instance_dict, weak_label_valid, weak_heat = gen_weak_label_with_point_fb(img, point_dict, superpixel, vor_img.copy())
             save_weak_label_path = os.path.join(output_weak_label_dir, img_name)
             os.makedirs(os.path.dirname(save_weak_label_path),exist_ok=True)
@@ -516,301 +558,16 @@ def preprocess_TNBC(img_dir, gt_dir, output_dir, train=True):
             save_weak_heat_path = os.path.join(output_weak_heatmap_dir, img_name)
             os.makedirs(os.path.dirname(save_weak_heat_path),exist_ok=True)
             cv2.imwrite(save_weak_heat_path, weak_heat)
-    
-def change_bg_point(preprocess_dir, output_dir):
-    output_point_dir = os.path.join(output_dir, 'points_fuse')
-    output_full_label_dir = os.path.join(output_dir,'labels_fuse/full')
-    output_full_heatmap_dir = os.path.join(output_dir,'labels_fuse/full_heatmap')
-    output_full_dist_dir = os.path.join(output_dir,'labels_fuse/full_distmap')
-    output_weak_label_dir = os.path.join(output_dir,'labels_fuse/weak')
-    output_weak_heatmap_dir = os.path.join(output_dir,'labels_fuse/weak_heatmap')
-    output_weak_dist_dir = os.path.join(output_dir,'labels_fuse/weak_distmap')
-    output_kmeans_dir = os.path.join(output_dir,'kmeans')
-    print("Change the background points with fused methods...")
-    img_dir = os.path.join(preprocess_dir, 'images')
-    img_names = sorted(os.listdir(img_dir))
-    
-    kernel_size = 11
-    conv_layer = nn.Conv2d(3,3, kernel_size, bias=False).eval()
-    conv_layer.weight = torch.nn.Parameter(torch.ones([3,3,kernel_size,kernel_size]))
-    
-    for ii, img_name in enumerate(img_names):
-        print("Generating the {}/{} labels....".format(ii, len(img_names)), end='\r')
-        img_path = os.path.join(img_dir, img_name)
-        point_path = os.path.join(preprocess_dir, 'points', img_name.replace('.png','.json'))
-        superpixel_path = os.path.join(preprocess_dir, 'superpixels', img_name.replace('.png','.tiff'))
-        semantic_path = os.path.join(preprocess_dir, 'semantics', img_name)
-        vor_path = os.path.join(preprocess_dir, 'labels/weak_distmap', img_name)
-        vor_img_path = os.path.join(preprocess_dir, 'voronois',img_name)
-        img = cv2.imread(img_path)
-        point_dict = json.load(open(point_path, 'r'))
-        superpixel = tif.imread(superpixel_path)
-        semantic = cv2.imread(semantic_path, flags=0)
-        vor = cv2.imread(vor_path, flags=0)
-        vor_img = cv2.imread(vor_img_path, flags=0)
-        H,W,C = img.shape
-        
-        img_conv = conv_layer(torch.tensor(img,dtype=torch.float32).permute(2,0,1).unsqueeze(0)).squeeze(0).permute(1,2,0).detach().numpy()
-        
-        pixels = img_conv.reshape((-1,3)).astype(np.float32)
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 500, 0.1)
-        K = 10
-        cluster_list = [0,0,0,0,0,0,0,0,0,0]
-        _, labels, centers = cv2.kmeans(pixels, K, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
-        
-        labels = labels.reshape((H-(kernel_size-1),W-(kernel_size-1)))
-        labels_mask = np.zeros((H,W),dtype=np.int16)
-        labels_mask[int(kernel_size/2):H-int(kernel_size/2),int(kernel_size/2):W-int(kernel_size/2)] = labels
-        labels = labels_mask
-        for point_idx, point_prop in point_dict['foreground'].items():
-            select_point = point_prop['select_point']
-            cluster_idx = labels[select_point[1], select_point[0]]
-            cluster_list[cluster_idx] += 1
-        cluster_sorted_idx = np.argsort(np.array(cluster_list))
-        
-        bg_cluster = [cluster_sorted_idx[i] for i in range(5)]
-        mask = np.ones((H,W))
-        for bg_idx in bg_cluster:
-            mask[labels==bg_idx] = 0
-        
-        mask = morphology.opening(mask, morphology.disk(3))
-        mask = morphology.closing(mask, morphology.disk(3))
-        mask = morphology.erosion(mask, morphology.disk(1))
-        
-        vor[vor==255]=1
-        mask = mask*vor
-        mask[:int(kernel_size/2),:] = 1
-        mask[-int(kernel_size/2):,:] = 1
-        mask[:,:int(kernel_size/2)] = 1
-        mask[:,-int(kernel_size/2):] = 1
-        vis = np.hstack((img, np.stack((mask,mask,mask),axis=2)))
-        vis[vis==1]=255
-        save_vis_path = os.path.join(output_kmeans_dir,img_name.replace('.png','_vis.png'))
-        os.makedirs(os.path.dirname(save_vis_path),exist_ok=True)
-        cv2.imwrite(save_vis_path, vis)
-        
-        ori_bg_dict = {'in_mask':[],'out_mask':[]}
-        for point_idx, point_prop in point_dict['background'].items():
-            point_x = point_prop['x']
-            point_y = point_prop['y']
-            ori_bg_value = mask[point_y, point_x]
-            if ori_bg_value == 1:
-                ori_bg_dict['in_mask'].append(point_prop)
-            else:
-                ori_bg_dict['out_mask'].append(point_prop)
-        print('Origin points: In mask point:{}. Out of mask point:{}'.format(len(ori_bg_dict['in_mask']), len(ori_bg_dict['out_mask'])))
-        
-        new_point_dict = {'foreground':point_dict['foreground'], 'background':{}}
-        bg_point_num = len(list(point_dict['background'].keys()))
-        background_points = []
-        new_bg_dict = {'in_mask':[], 'out_mask':[]}
-        semantic[semantic==128] = 1
-        while len(background_points)<bg_point_num:
-            x = random.randint(0, W-1)
-            y = random.randint(0, H-1)
-            if mask[y][x] == 0:
-                background_points.append([x,y])
-                if semantic[y][x] == 1:
-                    new_bg_dict['in_mask'].append([x,y])
-                else:
-                    new_bg_dict['out_mask'].append([x,y])
-        print("New points: In mask point:{}. Out of mask point:{}".format(len(new_bg_dict['in_mask']),len(new_bg_dict['out_mask'])))
-        
-        for ii, point in enumerate(background_points):
-            new_point_dict['background'][str(ii+1)] = {'x':int(point[0]),
-                                                       'y':int(point[1])}
-            
-        save_point_path = os.path.join(output_point_dir, img_name.replace('.png','.json'))
-        os.makedirs(os.path.dirname(save_point_path), exist_ok=True)
-        json.dump(new_point_dict, open(save_point_path, 'w'), indent=2)
-        
-        # generate the labels
-        # generate the full distmap labels
-        full_distmap = semantic
-        full_distmap[full_distmap==255]=0
-        full_distmap[full_distmap==128]=255
-        save_full_distmap_path = os.path.join(output_full_dist_dir, img_name)
-        os.makedirs(os.path.dirname(save_full_distmap_path),exist_ok=True)
-        cv2.imwrite(save_full_distmap_path, full_distmap)
-        
-        weak_distmap = gen_dist_label(img, vor_img, point_dict)
-        save_weak_distmap_path = os.path.join(output_weak_dist_dir, img_name)
-        os.makedirs(os.path.dirname(save_weak_distmap_path),exist_ok=True)
-        cv2.imwrite(save_weak_distmap_path, weak_distmap)
-        
-        # generate the full label and heatmap
-        full_label, full_heat = gen_full_label_with_semantic(semantic)
-        save_full_label_path = os.path.join(output_full_label_dir, img_name)
-        os.makedirs(os.path.dirname(save_full_label_path), exist_ok=True)
-        cv2.imwrite(save_full_label_path, full_label)
-        save_full_heat_path = os.path.join(output_full_heatmap_dir, img_name)
-        os.makedirs(os.path.dirname(save_full_heat_path), exist_ok=True)
-        cv2.imwrite(save_full_heat_path, full_heat)
-        
-        # generate the weak label and heatmap
-        weak_label, instance_dict, weak_label_valid, weak_heat = gen_weak_label_with_point_fb(img, point_dict, superpixel, vor_img.copy())
-        save_weak_label_path = os.path.join(output_weak_label_dir, img_name)
-        os.makedirs(os.path.dirname(save_weak_label_path),exist_ok=True)
-        cv2.imwrite(save_weak_label_path, weak_label)
-        save_weak_heat_path = os.path.join(output_weak_heatmap_dir, img_name)
-        os.makedirs(os.path.dirname(save_weak_heat_path),exist_ok=True)
-        cv2.imwrite(save_weak_heat_path, weak_heat)
-    pass
-
-def gen_split_file(preprocess_dir, output_dir):
-    # origin background points
-    split_dict = {'train':[], 'val':[]}
-    img_dir = os.path.join(preprocess_dir, 'images')
-    img_names = sorted(os.listdir(img_dir))
-    val_list = random.sample(img_names, 0)
-    for img_name in img_names:
-        img_path = os.path.join(img_dir, img_name)
-        gt_path = os.path.join(preprocess_dir,'gts', img_name.replace('.png','.tiff'))
-        full_label_path = os.path.join(preprocess_dir,'labels/full', img_name)
-        full_heat_path = os.path.join(preprocess_dir,'labels/full_heatmap', img_name)
-        full_dist_path = os.path.join(preprocess_dir,'labels/full_distmap', img_name)
-        weak_label_path = os.path.join(preprocess_dir,'labels/weak', img_name)
-        weak_heat_path = os.path.join(preprocess_dir,'labels/weak_heatmap', img_name)
-        weak_dist_path = os.path.join(preprocess_dir,'labels/weak_distmap', img_name)
-        semantic_path = os.path.join(preprocess_dir,'semantics', img_name)
-        point_path = os.path.join(preprocess_dir,'points', img_name.replace('.png','.json'))
-        train_item = {
-            "img_path": img_path,
-            "gt_path": gt_path,
-            "full_label_path": full_label_path,
-            "full_heat_path": full_heat_path,
-            "full_dist_path": full_dist_path,
-            "weak_label_path": weak_label_path,
-            "weak_heat_path": weak_heat_path,
-            "weak_dist_path": weak_dist_path,
-            "semantic_path": semantic_path,
-            "point_path": point_path,
-        }
-        if img_name not in val_list:
-            split_dict['train'].append(train_item)
-        else:
-            split_dict['val'].append(train_item)
-            
-    save_path = os.path.join(output_dir,'train_tnbc_val_tnbc_iter0.json')
-    json.dump(split_dict, open(save_path, 'w'), indent=2)
-        
-    # fuse background points
-    split_dict = {'train':[], 'val':[]}
-    for img_name in img_names:
-        img_path = os.path.join(img_dir, img_name)
-        gt_path = os.path.join(preprocess_dir,'gts', img_name.replace('.png','.tiff'))
-        full_label_path = os.path.join(preprocess_dir,'labels_fuse/full', img_name)
-        full_heat_path = os.path.join(preprocess_dir,'labels_fuse/full_heatmap', img_name)
-        full_dist_path = os.path.join(preprocess_dir,'labels_fuse/full_distmap', img_name)
-        weak_label_path = os.path.join(preprocess_dir,'labels_fuse/weak', img_name)
-        weak_heat_path = os.path.join(preprocess_dir,'labels_fuse/weak_heatmap', img_name)
-        weak_dist_path = os.path.join(preprocess_dir,'labels_fuse/weak_distmap', img_name)
-        semantic_path = os.path.join(preprocess_dir,'semantics', img_name)
-        point_path = os.path.join(preprocess_dir,'points_fuse', img_name.replace('.png','.json'))
-        train_item = {
-            "img_path": img_path,
-            "gt_path": gt_path,
-            "full_label_path": full_label_path,
-            "full_heat_path": full_heat_path,
-            "full_dist_path": full_dist_path,
-            "weak_label_path": weak_label_path,
-            "weak_heat_path": weak_heat_path,
-            "weak_dist_path": weak_dist_path,
-            "semantic_path": semantic_path,
-            "point_path": point_path,
-        }
-        if img_name not in val_list:
-            split_dict['train'].append(train_item)
-        else:
-            split_dict['val'].append(train_item)
-
-    save_path = os.path.join(output_dir,'train_tnbc_val_tnbc_iter0_fuse.json')
-    json.dump(split_dict, open(save_path, 'w'), indent=2)
-
-def gen_split_file_fine_grained(preprocess_dir, output_dir, img_list, save_type='bf'):
-    # origin background points
-    split_dict = {'train':[], 'val':[]}
-    img_dir = os.path.join(preprocess_dir, 'images')
-    img_names = sorted(img_list)
-    val_list = random.sample(img_names, round(0.2*len(img_names)))
-    for img_name in img_names:
-        img_path = os.path.join(img_dir, img_name)
-        gt_path = os.path.join(preprocess_dir,'gts', img_name.replace('.png','_label.tiff'))
-        full_label_path = os.path.join(preprocess_dir,'labels/full', img_name)
-        full_heat_path = os.path.join(preprocess_dir,'labels/full_heatmap', img_name)
-        full_dist_path = os.path.join(preprocess_dir,'labels/full_distmap', img_name)
-        weak_label_path = os.path.join(preprocess_dir,'labels/weak', img_name)
-        weak_heat_path = os.path.join(preprocess_dir,'labels/weak_heatmap', img_name)
-        weak_dist_path = os.path.join(preprocess_dir,'labels/weak_distmap', img_name)
-        semantic_path = os.path.join(preprocess_dir,'semantics', img_name)
-        point_path = os.path.join(preprocess_dir,'points', img_name.replace('.png','.json'))
-        train_item = {
-            "img_path": img_path,
-            "gt_path": gt_path,
-            "full_label_path": full_label_path,
-            "full_heat_path": full_heat_path,
-            "full_dist_path": full_dist_path,
-            "weak_label_path": weak_label_path,
-            "weak_heat_path": weak_heat_path,
-            "weak_dist_path": weak_dist_path,
-            "semantic_path": semantic_path,
-            "point_path": point_path,
-        }
-        if img_name not in val_list:
-            split_dict['train'].append(train_item)
-        else:
-            split_dict['val'].append(train_item)
-            
-    save_path = os.path.join(output_dir,'train_{}_val_{}_iter0.json'.format(save_type, save_type))
-    json.dump(split_dict, open(save_path, 'w'), indent=2)
-        
-    # fuse background points
-    split_dict = {'train':[], 'val':[]}
-    for img_name in img_names:
-        img_path = os.path.join(img_dir, img_name)
-        gt_path = os.path.join(preprocess_dir,'gts', img_name.replace('.png','_label.tiff'))
-        full_label_path = os.path.join(preprocess_dir,'labels_fuse/full', img_name)
-        full_heat_path = os.path.join(preprocess_dir,'labels_fuse/full_heatmap', img_name)
-        full_dist_path = os.path.join(preprocess_dir,'labels_fuse/full_distmap', img_name)
-        weak_label_path = os.path.join(preprocess_dir,'labels_fuse/weak', img_name)
-        weak_heat_path = os.path.join(preprocess_dir,'labels_fuse/weak_heatmap', img_name)
-        weak_dist_path = os.path.join(preprocess_dir,'labels_fuse/weak_distmap', img_name)
-        semantic_path = os.path.join(preprocess_dir,'semantics', img_name)
-        point_path = os.path.join(preprocess_dir,'points_fuse', img_name.replace('.png','.json'))
-        train_item = {
-            "img_path": img_path,
-            "gt_path": gt_path,
-            "full_label_path": full_label_path,
-            "full_heat_path": full_heat_path,
-            "full_dist_path": full_dist_path,
-            "weak_label_path": weak_label_path,
-            "weak_heat_path": weak_heat_path,
-            "weak_dist_path": weak_dist_path,
-            "semantic_path": semantic_path,
-            "point_path": point_path,
-        }
-        if img_name not in val_list:
-            split_dict['train'].append(train_item)
-        else:
-            split_dict['val'].append(train_item)
-
-    save_path = os.path.join(output_dir,'train_{}_val_{}_iter0_fuse.json'.format(save_type, save_type))
-    json.dump(split_dict, open(save_path, 'w'), indent=2)
 
 
 if __name__=="__main__":
+    # Recollect the TNBC images and gts
     data_root='./data/TNBC'
     img_dir = './data/TNBC/images'
     gt_dir = './data/TNBC/gts'
-    # recollect_files(data_root, img_dir, gt_dir)
+    recollect_files(data_root, img_dir, gt_dir)
+    
+    # Preprocessing
     output_dir = './data/TNBC'
     preprocess_TNBC(img_dir, gt_dir, output_dir, train=True)
-    
-    preprocess_dir = './data/TNBC'
-    output_dir = './data/TNBC'
-    change_bg_point(preprocess_dir, output_dir)
-
-    # preprocess_dir = './data/TNBC'
-    # output_dir = './data/splits'
-    # gen_split_file(preprocess_dir, output_dir)
     

@@ -1,17 +1,18 @@
 import os
 import cv2
-import json
-import numpy as np
+import glob
 import tifffile as tif
-from xml.etree import ElementTree as ET
-from skimage import segmentation, morphology, measure
+import numpy as np
+from skimage import measure, morphology, segmentation
 from skimage.segmentation import slic,mark_boundaries
 import random
 import math
-import pickle
+import json
 from scipy.spatial import Voronoi, voronoi_plot_2d
-import torch
+import shutil
 import torch.nn as nn
+import torch
+import scipy.io as io
 
 def gen_voronoi(semantic,point_dict):
     vor_img = np.zeros(semantic.shape[:2])
@@ -23,6 +24,7 @@ def gen_voronoi(semantic,point_dict):
         H,W = semantic.shape[:2]
         add_point_list = [[0,0],[0,W-1],[H-1,0],[H-1,W-1]]
         point_list += add_point_list
+    
     point_list = np.array(point_list)
     vor = Voronoi(point_list,)
     
@@ -78,7 +80,7 @@ def gen_point_supervision(gt):
             
         flag = 0
         attempt_num = 0
-        point_range = 0.05  # 0.05
+        point_range = 0.0  # 0.05
         while flag == 0:
             if attempt_num == 20:
                 point_range += 0.05
@@ -93,8 +95,8 @@ def gen_point_supervision(gt):
                 flag = 1
             else:
                 attempt_num += 1
-            if point_range > 0.3:
-                print("False point in image!!")
+            if point_range > 0.4:
+                print("False point in image!! False label:{}".format(valid_id))
                 break
         select_point = [point_x, point_y]
         
@@ -122,7 +124,7 @@ def gen_point_supervision(gt):
     H,W = background.shape
     background[gt>1] = 1
     background_points = []
-    need_point_num = max(100,round(np.max(gt)))     # background point number
+    need_point_num = max(300,round(np.max(gt)))     # background point number
     while len(background_points)<need_point_num:
         x = random.randint(0, W-1)
         y = random.randint(0, H-1)
@@ -158,7 +160,7 @@ def gen_superpixel_adaptive(img, point_dict):
     # find the minimum distance between the foreground
     fg_points_dict = point_dict['foreground']
     min_dist = get_min_distance(fg_points_dict)
-    min_dist = max(20, min_dist)
+    min_dist = min(max(10, min_dist),40)
     h_num = H/min_dist
     w_num = W/min_dist
     n_segment = h_num*w_num*2
@@ -277,6 +279,56 @@ def gen_full_label_with_semantic(semantic):
     full_heat = cv2.GaussianBlur(full_cls_label, (5,5), -1)*255
     return full_cls_label, full_heat
 
+def get_degree_n_distance(pt1,pt2):
+    """Caculate the degree and distance between two points
+
+    Args:
+        pt1 (_type_): the first point (x1, y1)
+        pt2 (_type_): the second point (x2, y2)
+
+    Returns:
+        _type_: _description_
+    """
+    dx = pt2[0] - pt1[0]
+    dy = pt2[1] - pt1[1]
+    dist = math.sqrt(dx**2 + dy**2)
+    if dist == 0:
+        deg = 0
+    else:
+        sin = dy/dist
+        cos = dx/dist
+        if sin>= 0 and cos>=0:
+            rad = math.asin(sin)
+        elif sin>=0 and cos<0:
+            rad = math.pi - math.asin(sin)
+        elif sin<0 and cos<0:
+            rad = math.pi - math.asin(sin)
+        elif sin<0 and cos>=0:
+            rad = 2*math.pi+ math.asin(sin)
+        deg = rad*360/(2*math.pi)
+    return deg, dist
+
+def gen_dist_label(img, vor, point_dict):
+    error_num = 0
+    fg_points_dict = point_dict['foreground']
+    label = np.zeros(img.shape[:2])
+    for inst_idx, inst_prop in fg_points_dict.items():
+        mask = np.zeros(img.shape[:2])
+        select_point = inst_prop['select_point']
+        bnd_point = inst_prop['boundary_point']
+        deg, dist = get_degree_n_distance(select_point, bnd_point)
+        mask = cv2.circle(mask, select_point, round(dist), color=1, thickness=-1)
+        mask[vor==255] = 0
+        mask = measure.label(mask,background=0)
+        valid_mask = mask[select_point[1], select_point[0]]
+        if valid_mask==0:
+            error_num += 1
+            print(inst_idx, select_point, bnd_point, dist)
+        else:
+            label[mask == valid_mask]= 1
+    label[label==1]=255
+    return label
+
 def create_interior_map(inst_map, if_boundary):
     """
     Parameters
@@ -317,45 +369,9 @@ def gen_full_n_weak_heatmap(full_label, weak_label, weak_label_valid):
     weak_heat = weak_heat/np.max(weak_heat)*255
     return full_heat, weak_heat
 
-def get_degree_n_distance(pt1,pt2):
-    dx = pt2[0] - pt1[0]
-    dy = pt2[1] - pt1[1]
-    dist = math.sqrt(dx**2 + dy**2)
-    if dist ==0:
-        deg = 0
-    else:
-        sin = dy/dist
-        cos = dx/dist
-        if sin>= 0 and cos>=0:
-            rad = math.asin(sin)
-        elif sin>=0 and cos<0:
-            rad = math.pi - math.asin(sin)
-        elif sin<0 and cos<0:
-            rad = math.pi - math.asin(sin)
-        elif sin<0 and cos>=0:
-            rad = 2*math.pi+ math.asin(sin)
-        deg = rad*360/(2*math.pi)
-    return deg, dist
-
-def gen_dist_label(img, vor, point_dict):
-    fg_points_dict = point_dict['foreground']
-    label = np.zeros(img.shape[:2])
-    for inst_idx, inst_prop in fg_points_dict.items():
-        mask = np.zeros(img.shape[:2])
-        select_point = inst_prop['select_point']
-        bnd_point = inst_prop['boundary_point']
-        deg, dist = get_degree_n_distance(select_point, bnd_point)
-        mask = cv2.circle(mask, select_point, round(dist), color=1, thickness=-1)
-        mask[vor==255] = 0
-        mask = measure.label(mask)
-        valid_mask = mask[select_point[1], select_point[0]]
-        label[mask == valid_mask]= 1
-    label[label==1]=255
-    return label
-
 def change_bg_point_w_fusion(img, semantic, point_dict, distmap):
     # Set local kernel
-    kernel_size = 5
+    kernel_size = 11
     conv_layer = nn.Conv2d(3,3, kernel_size, bias=False).eval()
     conv_layer.weight = torch.nn.Parameter(torch.ones([3,3,kernel_size,kernel_size]))
     
@@ -397,16 +413,16 @@ def change_bg_point_w_fusion(img, semantic, point_dict, distmap):
     mask[:,-int(kernel_size/2):] = 1
     
     # Check if the original points are in the new mask
-    # ori_bg_dict = {'in_mask':[],'out_mask':[]}
-    # for point_idx, point_prop in point_dict['background'].items():
-    #     point_x = point_prop['x']
-    #     point_y = point_prop['y']
-    #     ori_bg_value = mask[point_y, point_x]
-    #     if ori_bg_value == 1:
-    #         ori_bg_dict['in_mask'].append(point_prop)
-    #     else:
-    #         ori_bg_dict['out_mask'].append(point_prop)
-    # print('Origin points: In mask point:{}. Out of mask point:{}'.format(len(ori_bg_dict['in_mask']), len(ori_bg_dict['out_mask'])))
+    ori_bg_dict = {'in_mask':[],'out_mask':[]}
+    for point_idx, point_prop in point_dict['background'].items():
+        point_x = point_prop['x']
+        point_y = point_prop['y']
+        ori_bg_value = mask[point_y, point_x]
+        if ori_bg_value == 1:
+            ori_bg_dict['in_mask'].append(point_prop)
+        else:
+            ori_bg_dict['out_mask'].append(point_prop)
+    print('Origin points: In mask point:{}. Out of mask point:{}'.format(len(ori_bg_dict['in_mask']), len(ori_bg_dict['out_mask'])))
         
     # Select the new background points and check if they are in the semantic foreground
     bg_point_num = len(list(point_dict['background'].keys()))
@@ -422,7 +438,7 @@ def change_bg_point_w_fusion(img, semantic, point_dict, distmap):
                 new_bg_dict['in_mask'].append([x,y])
             else:
                 new_bg_dict['out_mask'].append([x,y])
-    # print("New points: In mask point:{}. Out of mask point:{}".format(len(new_bg_dict['in_mask']),len(new_bg_dict['out_mask'])))
+    print("New points: In mask point:{}. Out of mask point:{}".format(len(new_bg_dict['in_mask']),len(new_bg_dict['out_mask'])))
     
     # Generate the new point dict
     new_point_dict = {'foreground':point_dict['foreground'], 'background':{}}
@@ -432,13 +448,31 @@ def change_bg_point_w_fusion(img, semantic, point_dict, distmap):
         
     return new_point_dict
 
-
-def preprocess_MoNuSeg(img_dir, anno_dir, output_dir, train=True):
-    print("Preprocessing the MoNuSeg dataset...")
+def recollect_files(data_root, img_dir, gt_dir):
+    img_paths = sorted(glob.glob(os.path.join(data_root,'**/*.png'),recursive=True))
+    gt_paths = [img_path.replace("Lizard_Images1","Lizard_Labels/Labels").replace("Lizard_Images2","Lizard_Labels/Labels").replace('.png','.mat') for img_path in img_paths]
+    os.makedirs(img_dir, exist_ok=True)
+    os.makedirs(gt_dir, exist_ok=True)
+    for ii, img_path in enumerate(img_paths):
+        save_img_path = os.path.join(img_dir, os.path.basename(img_path))
+        save_gt_path = os.path.join(gt_dir, os.path.basename(gt_paths[ii]).replace('.mat','.tiff'))
+        shutil.copy(img_path, save_img_path)
+        label_mat = io.loadmat(gt_paths[ii])
+        gt = label_mat['inst_map']
+        bnd = segmentation.find_boundaries(gt, mode='inner')
+        gt[gt>0]=1
+        gt[bnd==1] = 0
+        gt = measure.label(gt, background=0)
+        gt = morphology.dilation(gt, morphology.disk(1))
+        
+        tif.imwrite(save_gt_path,gt)
+    
+def preprocess_Lizard(img_dir, gt_dir, output_dir, train=True,):
+    print("Preprocessing the Lizard dataset...")
     output_img_dir = os.path.join(output_dir, 'images')
-    output_superpixel_dir = os.path.join(output_dir,'superpixels')
+    output_superpixel_dir = os.path.join(output_dir, 'superpixels')
     output_gt_dir = os.path.join(output_dir, 'gts')
-    output_semantic_dir = os.path.join(output_dir, 'semantics')
+    output_semantic_dir = os.path.join(output_dir,'semantics')
     output_vis_dir = os.path.join(output_dir, 'vis')
     output_point_dir = os.path.join(output_dir,'points')
     output_voronoi_dir = os.path.join(output_dir,'voronois')
@@ -450,35 +484,24 @@ def preprocess_MoNuSeg(img_dir, anno_dir, output_dir, train=True):
     output_weak_dist_dir = os.path.join(output_dir,'labels/weak_distmap')
     
     img_names = os.listdir(img_dir)
-    for i, img_name in enumerate(sorted(img_names)):
-        print("Processing the {}/{} images...".format(i, len(img_names)), end='\r')
-        image_path = os.path.join(img_dir, img_name)
-        annotation_path = os.path.join(anno_dir, img_name.replace('.tif', '.xml'))
+    # img_names = ['crag_5.png','crag_11.png','crag_15.png','crag_22.png','crag_35.png','crag_47.png','crag_56.png',]
+    for ii, img_name in enumerate(sorted(img_names)):
+        print("Preprocessing the {}/{} images...".format(ii, len(img_names)), end='\r')
+        # if os.path.exists(os.path.join(output_weak_heatmap_dir, img_name)):
+        #     continue
+        img_path = os.path.join(img_dir, img_name)
+        gt_path = os.path.join(gt_dir, img_name.replace('.png','.tiff'))
         
-        img = tif.imread(image_path)
-        anno = ET.parse(annotation_path)
-        H,W,C = img.shape
-        # get the gt from the xml files
-        gt = np.zeros((H,W))
-        regions = anno.iter('Region')
-        for ii, region in enumerate(regions):
-            vertices = region.getchildren()[1]
-            pts = []
-            for v in vertices.getchildren():
-                x = round(float(v.get('X')))
-                y = round(float(v.get('Y')))
-                pts.append([x,y])
-            cv2.fillPoly(gt, [np.array(pts)], color=ii+1)
-        gt = gt.astype(np.int32)
-        save_gt_path = os.path.join(output_gt_dir, img_name.replace('.tif', '.tiff'))
-        os.makedirs(os.path.dirname(save_gt_path), exist_ok=True)
-        tif.imwrite(save_gt_path, gt)
+        img = cv2.imread(img_path)
+        gt = tif.imread(gt_path)
+        gt = morphology.dilation(gt, morphology.disk(1))
         
         # get the semantic segmentation maps
         semantic = create_interior_map(gt, if_boundary=False)
         semantic[semantic == 1] = 128
         semantic[semantic == 2] = 255
-        save_semantic_path = os.path.join(output_semantic_dir, img_name.replace('.tif','.png'))
+        print(np.unique(semantic))
+        save_semantic_path = os.path.join(output_semantic_dir,img_name)
         os.makedirs(os.path.dirname(save_semantic_path), exist_ok=True)
         cv2.imwrite(save_semantic_path, semantic)
         
@@ -487,17 +510,18 @@ def preprocess_MoNuSeg(img_dir, anno_dir, output_dir, train=True):
         vis[gt>0] = 255
         vis = vis[:,:,np.newaxis]
         vis = np.concatenate((vis,vis,vis), axis=2)
-        vis_path = os.path.join(output_vis_dir,img_name.replace('.tif','.png'))
-        vis = np.hstack((img, vis))
-        cv2.imwrite(vis_path, vis)
+        vis = np.hstack((img, vis)).astype(np.uint8)
+        save_vis_path = os.path.join(output_vis_dir, img_name)
+        os.makedirs(os.path.dirname(save_vis_path), exist_ok=True)
+        cv2.imwrite(save_vis_path, vis)
         
         if train:
             # Generate the initial point supervision
             point_dict = gen_point_supervision(gt.copy())
-            
-            # Generate voronoi images
+
+            # Generate the voronoi images
             vor_img = gen_voronoi(semantic.copy(), point_dict)
-            save_vor_path = os.path.join(os.path.join(output_voronoi_dir, img_name.replace('.tif','.png')))
+            save_vor_path = os.path.join(output_voronoi_dir, img_name)
             os.makedirs(os.path.dirname(save_vor_path), exist_ok=True)
             cv2.imwrite(save_vor_path, vor_img)
             
@@ -505,7 +529,7 @@ def preprocess_MoNuSeg(img_dir, anno_dir, output_dir, train=True):
             full_distmap = semantic.copy()
             full_distmap[full_distmap==255]=0
             full_distmap[full_distmap==128]=255
-            save_full_distmap_path = os.path.join(output_full_dist_dir, img_name.replace('.tif','.png'))
+            save_full_distmap_path = os.path.join(output_full_dist_dir, img_name)
             os.makedirs(os.path.dirname(save_full_distmap_path),exist_ok=True)
             cv2.imwrite(save_full_distmap_path, full_distmap)
             
@@ -513,57 +537,53 @@ def preprocess_MoNuSeg(img_dir, anno_dir, output_dir, train=True):
             weak_distmap = gen_dist_label(img, vor_img, point_dict)
             
             # Re-generate the point supervision with fusion methods
-            point_dict = change_bg_point_w_fusion(img, semantic, point_dict, weak_distmap)
-            save_point_path = os.path.join(output_point_dir, img_name.replace('.tif','.json'))
+            point_dict = change_bg_point_w_fusion(img, semantic.copy(), point_dict, weak_distmap)
+            save_point_path = os.path.join(output_point_dir, img_name.replace('.png','.json'))
             os.makedirs(os.path.dirname(save_point_path), exist_ok=True)
             json.dump(point_dict, open(save_point_path,'w'), indent=2)
             
             # Re-generate the weak distmap labels
             weak_distmap = gen_dist_label(img, vor_img, point_dict)
-            save_weak_distmap_path = os.path.join(output_weak_dist_dir, img_name.replace('.tif','.png'))
+            save_weak_distmap_path = os.path.join(output_weak_dist_dir, img_name)
             os.makedirs(os.path.dirname(save_weak_distmap_path),exist_ok=True)
             cv2.imwrite(save_weak_distmap_path, weak_distmap)
             
             # Generate the superpixels
             superpixel, sp_vis = gen_superpixel_adaptive(img, point_dict)
-            save_superpixel_path = os.path.join(output_superpixel_dir, img_name.replace('.tif','.tiff'))
+            save_superpixel_path = os.path.join(output_superpixel_dir, img_name.replace('.png','.tiff'))
             os.makedirs(os.path.dirname(save_superpixel_path), exist_ok=True)
             tif.imwrite(save_superpixel_path, superpixel)
-            save_sp_vis_path = os.path.join(output_superpixel_dir, img_name.replace('.tif','_vis.png'))
+            save_sp_vis_path = os.path.join(output_superpixel_dir, img_name.replace('.png','_vis.png'))
             os.makedirs(os.path.dirname(save_sp_vis_path), exist_ok=True)
             cv2.imwrite(save_sp_vis_path, sp_vis)
             
             # Generate the full label and heatmap
-            full_label, full_heat = gen_full_label_with_semantic(semantic)
-            save_full_label_path = os.path.join(output_full_label_dir, img_name.replace('.tif','.png'))
+            full_label, full_heat = gen_full_label_with_semantic(semantic.copy())
+            save_full_label_path = os.path.join(output_full_label_dir, img_name)
             os.makedirs(os.path.dirname(save_full_label_path), exist_ok=True)
             cv2.imwrite(save_full_label_path, full_label)
-            save_full_heat_path = os.path.join(output_full_heatmap_dir, img_name.replace('.tif','.png'))
+            save_full_heat_path = os.path.join(output_full_heatmap_dir, img_name)
             os.makedirs(os.path.dirname(save_full_heat_path), exist_ok=True)
             cv2.imwrite(save_full_heat_path, full_heat)
             
-            # generate the weak label and heatmap
+            # # Generate the weak label and heatmap
             weak_label, instance_dict, weak_label_valid, weak_heat = gen_weak_label_with_point_fb(img, point_dict, superpixel, vor_img.copy())
-            save_weak_label_path = os.path.join(output_weak_label_dir, img_name.replace('.tif','.png'))
+            save_weak_label_path = os.path.join(output_weak_label_dir, img_name)
             os.makedirs(os.path.dirname(save_weak_label_path),exist_ok=True)
             cv2.imwrite(save_weak_label_path, weak_label)
-            save_weak_heat_path = os.path.join(output_weak_heatmap_dir, img_name.replace('.tif','.png'))
+            save_weak_heat_path = os.path.join(output_weak_heatmap_dir, img_name)
             os.makedirs(os.path.dirname(save_weak_heat_path),exist_ok=True)
             cv2.imwrite(save_weak_heat_path, weak_heat)
-            
-    pass
-
 
 
 if __name__=="__main__":
-    # image_dir = './data/MoNuSeg/train/images'
-    # anno_dir = './data/MoNuSeg/train/annotations'
-    # output_dir = './data/MoNuSeg/train/'
-    # preprocess_MoNuSeg(image_dir, anno_dir, output_dir, train=True)
+    # Recollect the TNBC images and gts
+    data_root='./data/Lizard/origin'
+    img_dir = './data/Lizard/images'
+    gt_dir = './data/Lizard/gts'
+    # recollect_files(data_root, img_dir, gt_dir)
     
+    # Preprocessing
+    output_dir = './data/Lizard'
+    preprocess_Lizard(img_dir, gt_dir, output_dir, train=True)
     
-    image_dir = './data/MoNuSeg/test/images'
-    anno_dir = './data/MoNuSeg/test/annotations'
-    output_dir = './data/MoNuSeg/test'
-    preprocess_MoNuSeg(image_dir, anno_dir, output_dir, train=True)
-    pass

@@ -9,7 +9,9 @@ import random
 import math
 import json
 from scipy.spatial import Voronoi, voronoi_plot_2d
-
+import torch
+import torch.nn as nn
+import threading
 
 brightfield_1_list = ['cell_00001.png', 'cell_00002.png', 'cell_00003.png', 'cell_00004.png', 'cell_00005.png', 'cell_00006.png', 'cell_00007.png', 'cell_00008.png', 'cell_00009.png', 'cell_00010.png', 'cell_00011.png', 'cell_00012.png', 'cell_00015.png', 'cell_00016.png', 'cell_00017.png', 'cell_00018.png', 'cell_00019.png', 'cell_00020.png', 'cell_00021.png', 'cell_00022.png', 'cell_00023.png', 'cell_00024.png', 'cell_00025.png', 'cell_00026.png', 'cell_00027.png', 'cell_00028.png', 'cell_00029.png', 'cell_00030.png', 'cell_00031.png', 'cell_00032.png', 'cell_00033.png', 'cell_00034.png', 'cell_00035.png', 'cell_00036.png', 'cell_00037.png', 'cell_00038.png', 'cell_00039.png', 'cell_00040.png', 'cell_00041.png', 'cell_00042.png', 'cell_00043.png', 'cell_00044.png', 'cell_00045.png', 'cell_00046.png', 'cell_00047.png', 'cell_00048.png', 'cell_00049.png', 'cell_00050.png', 'cell_00051.png', 'cell_00052.png', 'cell_00053.png', 'cell_00054.png', 'cell_00055.png', 'cell_00056.png', 'cell_00057.png', 'cell_00058.png', 'cell_00059.png', 'cell_00060.png', 'cell_00061.png', 'cell_00062.png', 'cell_00063.png', 'cell_00064.png', 'cell_00065.png', 'cell_00066.png', 'cell_00067.png', 'cell_00068.png', 'cell_00069.png', 'cell_00070.png', 'cell_00071.png', 'cell_00072.png', 'cell_00073.png', 'cell_00074.png', 'cell_00075.png', 'cell_00076.png', 'cell_00077.png', 'cell_00078.png', 'cell_00079.png', 'cell_00080.png', 'cell_00081.png', 'cell_00082.png', 'cell_00083.png', 'cell_00084.png', 'cell_00085.png', 'cell_00086.png', 'cell_00087.png', 'cell_00088.png', 'cell_00089.png', 'cell_00090.png', 'cell_00091.png', 'cell_00092.png', 'cell_00093.png', 'cell_00094.png', 'cell_00095.png', 'cell_00096.png', 'cell_00097.png', 'cell_00098.png', 'cell_00099.png', 'cell_00100.png', 'cell_00101.png', 'cell_00102.png', 'cell_00103.png', 'cell_00104.png', 'cell_00105.png', 'cell_00106.png', 'cell_00107.png', 'cell_00108.png', 'cell_00109.png', 'cell_00110.png', 'cell_00111.png', 'cell_00112.png', 'cell_00113.png', 'cell_00114.png', 'cell_00115.png', 'cell_00116.png', 'cell_00117.png', 'cell_00118.png', 'cell_00119.png', 'cell_00120.png', 'cell_00121.png', 'cell_00122.png', 'cell_00123.png', 'cell_00124.png', 'cell_00125.png', 'cell_00126.png', 'cell_00127.png', 'cell_00128.png', 'cell_00129.png', 'cell_00130.png', 'cell_00131.png', 'cell_00132.png', 'cell_00133.png', 'cell_00134.png', 'cell_00135.png', 'cell_00136.png', 'cell_00137.png', 'cell_00138.png', 'cell_00139.png', 'cell_00140.png', 'cell_00141.png']
 
@@ -21,21 +23,115 @@ fluorescent_list = ['cell_00719.png', 'cell_00720.png', 'cell_00721.png', 'cell_
 
 PC_list = ['cell_00013.png', 'cell_00014.png', 'cell_00231.png', 'cell_00232.png', 'cell_00233.png', 'cell_00234.png', 'cell_00235.png', 'cell_00236.png', 'cell_00237.png', 'cell_00238.png', 'cell_00239.png', 'cell_00240.png', 'cell_00241.png', 'cell_00242.png', 'cell_00243.png', 'cell_00244.png', 'cell_00245.png', 'cell_00246.png', 'cell_00247.png', 'cell_00248.png', 'cell_00249.png', 'cell_00250.png', 'cell_00251.png', 'cell_00252.png', 'cell_00253.png', 'cell_00254.png', 'cell_00255.png', 'cell_00256.png', 'cell_00257.png', 'cell_00258.png', 'cell_00259.png', 'cell_00260.png', 'cell_00261.png', 'cell_00262.png', 'cell_00263.png', 'cell_00264.png', 'cell_00265.png', 'cell_00266.png', 'cell_00267.png', 'cell_00268.png', 'cell_00269.png', 'cell_00270.png', 'cell_00271.png', 'cell_00272.png', 'cell_00273.png', 'cell_00274.png', 'cell_00275.png', 'cell_00276.png', 'cell_00277.png', 'cell_00278.png', 'cell_00279.png', 'cell_00280.png', 'cell_00281.png', 'cell_00282.png', 'cell_00283.png', 'cell_00284.png', 'cell_00285.png', 'cell_00286.png', 'cell_00287.png', 'cell_00288.png', 'cell_00289.png', 'cell_00290.png', 'cell_00291.png', 'cell_00292.png', 'cell_00293.png', 'cell_00294.png', 'cell_00295.png', 'cell_00296.png', 'cell_00297.png', 'cell_00298.png', 'cell_00299.png', 'cell_00300.png', 'cell_00301.png', 'cell_00302.png', 'cell_00303.png', 'cell_00304.png', 'cell_00305.png', 'cell_00306.png', 'cell_00307.png', 'cell_00308.png', 'cell_00309.png', 'cell_00310.png', 'cell_00311.png', 'cell_00312.png', 'cell_00313.png', 'cell_00314.png', 'cell_00315.png', 'cell_00316.png', 'cell_00317.png', 'cell_00318.png', 'cell_00319.png', 'cell_00320.png', 'cell_00321.png', 'cell_00322.png', 'cell_00323.png', 'cell_00324.png', 'cell_00325.png', 'cell_00326.png', 'cell_00327.png', 'cell_00328.png', 'cell_00329.png', 'cell_00330.png', 'cell_00331.png', 'cell_00332.png', 'cell_00333.png', 'cell_00334.png', 'cell_00335.png', 'cell_00336.png', 'cell_00337.png', 'cell_00338.png', 'cell_00339.png', 'cell_00340.png', 'cell_00341.png', 'cell_00342.png', 'cell_00343.png', 'cell_00344.png', 'cell_00345.png', 'cell_00346.png', 'cell_00347.png', 'cell_00348.png', 'cell_00349.png', 'cell_00350.png', 'cell_00351.png', 'cell_00352.png', 'cell_00353.png', 'cell_00354.png', 'cell_00355.png', 'cell_00356.png', 'cell_00357.png', 'cell_00358.png', 'cell_00359.png', 'cell_00360.png', 'cell_00361.png', 'cell_00362.png', 'cell_00363.png', 'cell_00364.png', 'cell_00365.png', 'cell_00366.png', 'cell_00367.png', 'cell_00368.png', 'cell_00369.png', 'cell_00370.png', 'cell_00371.png', 'cell_00372.png', 'cell_00373.png', 'cell_00374.png', 'cell_00375.png', 'cell_00376.png', 'cell_00377.png', 'cell_00378.png', 'cell_00379.png', 'cell_00380.png', 'cell_00381.png', 'cell_00382.png', 'cell_00383.png', 'cell_00384.png', 'cell_00385.png', 'cell_00386.png', 'cell_00387.png', 'cell_00388.png', 'cell_00389.png', 'cell_00390.png', 'cell_00391.png', 'cell_00392.png', 'cell_00393.png', 'cell_00394.png', 'cell_00395.png', 'cell_00396.png', 'cell_00397.png', 'cell_00398.png', 'cell_00399.png', 'cell_00400.png', 'cell_00401.png', 'cell_00402.png', 'cell_00403.png', 'cell_00404.png', 'cell_00405.png', 'cell_00406.png', 'cell_00407.png', 'cell_00408.png', 'cell_00409.png', 'cell_00410.png', 'cell_00411.png', 'cell_00412.png', 'cell_00413.png', 'cell_00414.png', 'cell_00415.png', 'cell_00416.png', 'cell_00417.png', 'cell_00418.png', 'cell_00419.png', 'cell_00420.png', 'cell_00421.png', 'cell_00422.png', 'cell_00423.png', 'cell_00424.png', 'cell_00425.png', 'cell_00426.png', 'cell_00427.png', 'cell_00428.png', 'cell_00429.png', 'cell_00430.png', 'cell_00431.png', 'cell_00432.png', 'cell_00433.png', 'cell_00434.png', 'cell_00435.png', 'cell_00436.png', 'cell_00437.png', 'cell_00438.png', 'cell_00439.png', 'cell_00440.png', 'cell_00441.png', 'cell_00442.png', 'cell_00443.png', 'cell_00444.png', 'cell_00445.png', 'cell_00446.png', 'cell_00447.png', 'cell_00448.png', 'cell_00449.png', 'cell_00450.png', 'cell_00451.png', 'cell_00452.png', 'cell_00453.png', 'cell_00454.png', 'cell_00455.png', 'cell_00456.png', 'cell_00457.png', 'cell_00458.png', 'cell_00459.png', 'cell_00460.png', 'cell_00461.png', 'cell_00462.png', 'cell_00463.png', 'cell_00464.png', 'cell_00465.png', 'cell_00466.png', 'cell_00467.png', 'cell_00468.png', 'cell_00469.png', 'cell_00470.png', 'cell_00471.png', 'cell_00472.png', 'cell_00473.png', 'cell_00474.png', 'cell_00475.png', 'cell_00476.png', 'cell_00477.png', 'cell_00478.png', 'cell_00479.png', 'cell_00480.png', 'cell_00481.png', 'cell_00482.png', 'cell_00483.png', 'cell_00484.png', 'cell_00485.png', 'cell_00486.png', 'cell_00487.png', 'cell_00488.png', 'cell_00489.png', 'cell_00490.png', 'cell_00491.png', 'cell_00492.png', 'cell_00493.png', 'cell_00494.png', 'cell_00495.png', 'cell_00496.png', 'cell_00497.png', 'cell_00498.png', 'cell_00499.png', 'cell_00500.png', 'cell_00526.png', 'cell_00527.png', 'cell_00546.png', 'cell_00547.png', 'cell_00548.png', 'cell_00549.png', 'cell_00550.png', 'cell_00551.png', 'cell_00552.png', 'cell_00553.png', 'cell_00554.png', 'cell_00555.png', 'cell_00556.png']
 
-other_list = ['cell_00142.png', 'cell_00143.png', 'cell_00144.png', 'cell_00545.png', 'cell_00620.png', 'cell_00678.png', 'cell_00679.png', 'cell_00680.png', 'cell_00681.png', 'cell_00682.png', 'cell_00683.png', 'cell_00684.png', 'cell_00685.png', 'cell_00686.png', 'cell_00687.png', 'cell_00688.png', 'cell_00689.png', 'cell_00690.png', 'cell_00691.png']
 
-def gen_point_supervision(semantic):
+def gen_voronoi(semantic,point_dict):
+    vor_img = np.zeros(semantic.shape[:2])
+    point_list = []
+    for point_idx, point_prop in point_dict['foreground'].items():
+        select_point = point_prop['select_point']
+        point_list.append(select_point)
+    if len(point_list)<=2:
+        H,W = semantic.shape[:2]
+        add_point_list = [[0,0],[0,W-1],[H-1,0],[H-1,W-1]]
+        point_list += add_point_list
+    
+    point_list = np.array(point_list)
+    vor = Voronoi(point_list,)
+    
+    center = vor.points.mean(axis=0)
+    ptp_bound = vor.points.ptp(axis=0)
+    finite_segments = []
+    infinite_segments = []
+    for pointidx, simplex in zip(vor.ridge_points, vor.ridge_vertices):
+        simplex = np.asarray(simplex)
+        if np.all(simplex >= 0):
+            finite_segments.append(vor.vertices[simplex])
+        else:
+            i = simplex[simplex >= 0][0]  # finite end Voronoi vertex
+
+            t = vor.points[pointidx[1]] - vor.points[pointidx[0]]  # tangent
+            t /= np.linalg.norm(t)
+            n = np.array([-t[1], t[0]])  # normal
+
+            midpoint = vor.points[pointidx].mean(axis=0)
+            direction = np.sign(np.dot(midpoint - center, n)) * n
+            if (vor.furthest_site):
+                direction = -direction
+            far_point = vor.vertices[i] + direction * ptp_bound.max()
+
+            infinite_segments.append([vor.vertices[i], far_point])
+    
+    for seg in finite_segments:
+        start_p, stop_p = seg
+        start_p = [round(start_p[0]), round(start_p[1])]
+        stop_p = [round(stop_p[0]), round(stop_p[1])]
+        cv2.line(vor_img, start_p, stop_p, 255, thickness=1)
+    for seg in infinite_segments:
+        start_p, stop_p = seg
+        start_p = [round(start_p[0]), round(start_p[1])]
+        stop_p = [round(stop_p[0]), round(stop_p[1])]
+        cv2.line(vor_img, start_p, stop_p, 255, thickness=1)
+    kernel = np.array([[0,1,0],[1,1,0],[0,0,0]])
+    vor_img = morphology.dilation(vor_img, kernel)
+    return vor_img
+
+def gen_background_points_w_kmeans(img, point_dict, semantic, vor):
+    H,W,C = img.shape
+    pixels = img.reshape((-1,3)).astype(np.float32)
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 500, 0.1)
+    K = 10
+    cluster_list = [0,0,0,0,0,0,0,0,0,0]
+    _, labels, centers = cv2.kmeans(pixels, K, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
+    labels = labels.reshape((H,W))
+    for point_idx, point_prop in point_dict['foreground'].items():
+        select_point = point_prop['select_point']
+        cluster_idx = labels[select_point[1], select_point[0]]
+        cluster_list[cluster_idx] += 1
+    cluster_sorted_idx = np.argsort(np.array(cluster_list))
+        
+    bg_cluster = [cluster_sorted_idx[i] for i in range(5)]
+    mask = np.ones((H,W))
+    for bg_idx in bg_cluster:
+        mask[labels==bg_idx] = 0
+        
+    mask = morphology.opening(mask, morphology.disk(3))
+    mask = morphology.closing(mask, morphology.disk(3))
+    mask = morphology.erosion(mask, morphology.disk(3))
+    vor[vor==255]=1
+    mask = mask*vor
+        
+    new_point_dict = {'foreground':point_dict['foreground'], 'background':{}}
+    bg_point_num = len(list(point_dict['background'].keys()))
+    background_points = []
+    
+    semantic[semantic==128] = 1
+    while len(background_points)<bg_point_num:
+        x = random.randint(0, W-1)
+        y = random.randint(0, H-1)
+        if mask[y][x] == 0:
+            background_points.append([x,y])
+        
+        for ii, point in enumerate(background_points):
+            new_point_dict['background'][str(ii+1)] = {'x':int(point[0]),
+                                                       'y':int(point[1])}
+    return new_point_dict
+
+def gen_point_supervision(gt):
     point_dict = {"background":{}, "foreground":{}}
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(semantic.astype(np.uint8),connectivity=8)
+    region_props = measure.regionprops(gt)
+    H,W = gt.shape
     # select the foreground points
-    num_cells = np.max(labels)
-    for ii in range(1,num_cells+1):
-        x,y,w,h,s = stats[ii]
-        centroid = centroids[ii]
+    for region_prop in region_props:
+        y1, x1, y2, x2= region_prop.bbox
+        centroid = region_prop.centroid
         centroid = list(map(int,centroid))
+        valid_id = region_prop.label
+        w = x2-x1
+        h = y2-y1
             
         flag = 0
         attempt_num = 0
-        point_range = 0.1
+        point_range = 0.00  #0.05
         while flag == 0:
             if attempt_num == 20:
                 point_range += 0.05
@@ -44,28 +140,42 @@ def gen_point_supervision(semantic):
             offset_ratio_y = ((random.random()-0.5)/0.5)*point_range      #[-0.25,0.25]
             offset_x = round(w*offset_ratio_x)
             offset_y = round(h*offset_ratio_y)
-            point_x = centroid[0] + offset_x
-            point_y = centroid[1] + offset_y
-            if labels[point_y, point_x] == ii:
+            point_x = max(0,min(centroid[1] + offset_x, W-1))
+            point_y = max(0,min(centroid[0] + offset_y, H-1))
+            if gt[point_y, point_x] == valid_id:
                 flag = 1
             else:
                 attempt_num += 1
             if point_range > 0.3:
                 print("False point in image!!")
+                break
+        select_point = [point_x, point_y]
         
-        point_dict['foreground'][str(ii)] = {'x':int(x),
-                                            'y':int(y),
+        # get a boundary point
+        mask = np.zeros(gt.shape)
+        mask[gt==valid_id] = 1
+        bnd = segmentation.find_boundaries(mask, mode='inner')
+        bnd_points = np.array(np.where(bnd==1)).T
+        dist_list = []
+        for bnd_point in bnd_points:
+            deg, dist = get_degree_n_distance(select_point, [bnd_point[1],bnd_point[0]])
+            dist_list.append(dist)
+        dist_max_idx = np.argmax(np.array(dist_list))
+        select_bnd_point = [int(bnd_points[dist_max_idx][1]),int(bnd_points[dist_max_idx][0])]
+        
+        point_dict['foreground'][str(valid_id)] = {'x':int(x1),
+                                            'y':int(y1),
                                             'w':int(w),
                                             'h':int(h),
-                                            's':int(s),
-                                            'centroid':centroid,
-                                            "select_point":[point_x, point_y]}
+                                            'centroid': centroid,
+                                            "select_point": select_point,
+                                            "boundary_point": select_bnd_point}
     # select the background points
-    background = np.zeros(semantic.shape)
+    background = np.zeros(gt.shape)
     H,W = background.shape
-    background[semantic==1] = 1
-    background_points= []
-    need_point_num = max(10,round(num_cells))
+    background[gt>1] = 1
+    background_points = []
+    need_point_num = max(100,round(np.max(gt)))
     while len(background_points)<need_point_num:
         x = random.randint(0, W-1)
         y = random.randint(0, H-1)
@@ -105,16 +215,26 @@ def gen_superpixel_adaptive(img, point_dict):
     h_num = H/min_dist
     w_num = W/min_dist
     n_segment = h_num*w_num*2
-    seg = slic(img, n_segments=n_segment, compactness=10, sigma=3, max_num_iter=5, slic_zero=True)
+    seg = slic(img, n_segments=n_segment, compactness=10, sigma=3, max_num_iter=10, slic_zero=True)
     vis = mark_boundaries(img,seg)*255
+    for inst_idx, inst_prop in fg_points_dict.items():
+        fg_point = inst_prop['select_point']
+        bnd_point = inst_prop['boundary_point']
+        vis = cv2.circle(vis, fg_point, 1, color=[255, 0, 0], thickness=-1)
+        vis = cv2.circle(vis, bnd_point, 1, color=[0, 255, 0], thickness=-1)
+    for inst_idx, inst_prop in point_dict['background'].items():
+        bg_point = [inst_prop['x'], inst_prop['y']]
+        vis = cv2.circle(vis, bg_point, 1, color=[0, 0, 255], thickness=-1)
     return seg, vis
 
-def gen_weak_label_with_point_fb(img, point_dict, superpixel, **kwargs):
+def gen_weak_label_with_point_fb(img, point_dict, superpixel, vor_img):
     weak_label = np.ones(img.shape[:2])*255
+    weak_heat = np.zeros(img.shape[:2])
     weak_label_count = np.zeros(img.shape[:2])
     weak_label_valid = np.zeros(img.shape[:2])
     fg_points_dict = point_dict['foreground']
     bg_points_dict = point_dict['background']
+    repeat_foreground_superpixels = []
     instance_dict = {"superpixels":{}, "instances":{}, 'background':[], 'labeled_sp':[]}
     for superpixel_idx in range(1,np.max(superpixel)+1):
         instance_dict['superpixels'][superpixel_idx]=-1
@@ -130,14 +250,20 @@ def gen_weak_label_with_point_fb(img, point_dict, superpixel, **kwargs):
         weak_temp = np.zeros(img.shape[:2], dtype=np.uint8)
         weak_temp[superpixel == superpixel_value] = 1
         weak_temp_boundary = segmentation.find_boundaries(weak_temp, mode='outer')
-        # set the weak label
-        weak_label[superpixel == superpixel_value] = 0
-        # get the counting image for adj pixels
-        weak_label_count = weak_label_count + weak_temp + weak_temp_boundary
-        instance_dict['superpixels'][str(superpixel_value)] = 0
-        instance_dict['background'].append(int(superpixel_value))
-        instance_dict['labeled_sp'].append(int(superpixel_value))
-    
+        
+        if instance_dict['superpixels'][superpixel_value] == 0:
+            pass
+        elif instance_dict['superpixels'][superpixel_value] > 0:
+            pass
+        else:
+            # set the weak label
+            weak_label[superpixel == superpixel_value] = 0
+            # get the counting image for adj pixels
+            weak_label_count = weak_label_count + weak_temp + weak_temp_boundary
+            instance_dict['superpixels'][superpixel_value] = 0
+            instance_dict['background'].append(int(superpixel_value))
+            instance_dict['labeled_sp'].append(int(superpixel_value))
+
     # For foreground
     for point_idx, fg_point_prop in fg_points_dict.items():
         point_x, point_y = fg_point_prop['select_point']
@@ -148,29 +274,108 @@ def gen_weak_label_with_point_fb(img, point_dict, superpixel, **kwargs):
         weak_temp = np.zeros(img.shape[:2], dtype=np.uint8)
         weak_temp[superpixel == superpixel_value] = 1
         weak_temp_boundary = segmentation.find_boundaries(weak_temp, mode='outer')
-        # set the weak label
-        weak_label[superpixel == superpixel_value] = 1
-        # get the counting image for adj pixels
-        weak_label_count = weak_label_count + weak_temp + weak_temp_boundary
-        instance_dict['superpixels'][str(superpixel_value)] = int(point_idx)
-        instance_dict['instances'][str(point_idx)] = [int(superpixel_value)]
-        instance_dict['labeled_sp'].append(int(superpixel_value))
+        
+        if instance_dict['superpixels'][superpixel_value] > 0:
+            repeat_foreground_superpixels.append(superpixel_value)
+            # print("[Error] Warning: at least 2 foreground points are in the same superpixel!!!!!")
+            instance_dict['instances'][int(point_idx)] = [int(superpixel_value)]
+            pass
+        elif instance_dict['superpixels'][superpixel_value] == 0:
+            # set the weak label
+            weak_label[superpixel == superpixel_value] = 1
+            weak_heat[superpixel == superpixel_value] = 1
+            instance_dict['superpixels'][superpixel_value] = int(point_idx)
+            instance_dict['background'].remove(int(superpixel_value))
+            instance_dict['instances'][int(point_idx)] = [int(superpixel_value)]
+        else:
+            # set the weak label
+            weak_label[superpixel == superpixel_value] = 1
+            weak_heat[superpixel == superpixel_value] = 1
+            # get the counting image for adj pixels
+            weak_label_count = weak_label_count + weak_temp + weak_temp_boundary
+            instance_dict['superpixels'][superpixel_value] = int(point_idx)
+            instance_dict['instances'][int(point_idx)] = [int(superpixel_value)]
+            instance_dict['labeled_sp'].append(int(superpixel_value))
     
     # fine-grained fix: 
+    vor_img[vor_img==255] = 1
+    boundary_mask = np.zeros(img.shape[:2])
+    for sp in repeat_foreground_superpixels:
+        boundary_mask[superpixel==sp]=1
+    boundary_mask = boundary_mask*vor_img
+    
     adj_pixels = np.zeros(img.shape[:2])
     adj_pixels[weak_label_count>1] = 1
+    adj_pixels[boundary_mask==1] = 1
     adj_pixels = morphology.dilation(adj_pixels, morphology.disk(1))
     adj_pixels = adj_pixels*weak_label_valid
     weak_label[adj_pixels == 1] = 0
-    
-    return weak_label, instance_dict, weak_label_valid
+    # weak heat
+    weak_heat[adj_pixels == 1] = 0
+    weak_heat = morphology.dilation(weak_heat, morphology.disk(1))
+    weak_heat = cv2.GaussianBlur(weak_heat.astype(np.float32), (3,3), -1)
+    weak_heat = weak_heat*weak_label_valid
+    weak_heat = weak_heat/np.max(weak_heat)*255
+
+    return weak_label, instance_dict, weak_label_valid, weak_heat
 
 def gen_full_label_with_semantic(semantic):
+    semantic[semantic==128] = 1
+    semantic[semantic==255] = 2
     full_label = np.zeros(semantic.shape)
-    full_label[semantic>0]=1
-    return full_label
+    full_label[semantic==1] = 1
+    full_label[semantic==2] = 2
+    
+    full_cls_label = full_label.astype(np.float32)
+    full_heat = cv2.GaussianBlur(full_cls_label, (5,5), -1)*255
+    return full_cls_label, full_heat
 
-def create_interior_map(inst_map, disk_size):
+def get_degree_n_distance(pt1,pt2):
+    """Caculate the degree and distance between two points
+
+    Args:
+        pt1 (_type_): the first point (x1, y1)
+        pt2 (_type_): the second point (x2, y2)
+
+    Returns:
+        _type_: _description_
+    """
+    dx = pt2[0] - pt1[0]
+    dy = pt2[1] - pt1[1]
+    dist = math.sqrt(dx**2 + dy**2)
+    if dist == 0:
+        deg = 0
+    else:
+        sin = dy/dist
+        cos = dx/dist
+        if sin>= 0 and cos>=0:
+            rad = math.asin(sin)
+        elif sin>=0 and cos<0:
+            rad = math.pi - math.asin(sin)
+        elif sin<0 and cos<0:
+            rad = math.pi - math.asin(sin)
+        elif sin<0 and cos>=0:
+            rad = 2*math.pi+ math.asin(sin)
+        deg = rad*360/(2*math.pi)
+    return deg, dist
+
+def gen_dist_label(img, vor, point_dict):
+    fg_points_dict = point_dict['foreground']
+    label = np.zeros(img.shape[:2])
+    for inst_idx, inst_prop in fg_points_dict.items():
+        mask = np.zeros(img.shape[:2])
+        select_point = inst_prop['select_point']
+        bnd_point = inst_prop['boundary_point']
+        deg, dist = get_degree_n_distance(select_point, bnd_point)
+        mask = cv2.circle(mask, select_point, round(dist), color=1, thickness=-1)
+        mask[vor==255] = 0
+        mask = measure.label(mask)
+        valid_mask = mask[select_point[1], select_point[0]]
+        label[mask == valid_mask]= 1
+    label[label==1]=255
+    return label
+
+def create_interior_map(inst_map, if_boundary):
     """
     Parameters
     ----------
@@ -186,99 +391,220 @@ def create_interior_map(inst_map, disk_size):
     """
     # create interior-edge map
     boundary = segmentation.find_boundaries(inst_map, mode='inner')
-    boundary = morphology.binary_dilation(boundary, morphology.disk(disk_size))
+    boundary = morphology.binary_dilation(boundary, morphology.disk(0))
 
     interior_temp = np.logical_and(~boundary, inst_map > 0)
     # interior_temp[boundary] = 0
     interior_temp = morphology.remove_small_objects(interior_temp, min_size=16)
     interior = np.zeros_like(inst_map, dtype=np.uint8)
     interior[interior_temp] = 1
-    interior[boundary] = 0          # it used to be 2
+    if if_boundary:
+        interior[boundary] = 2
+    else:
+        interior[boundary]= 0
     return interior
 
-def preprocess_CellSeg(image_dir, gt_dir, output_dir):
-    print("Preprocessing the CellSeg dataset...")
-    output_semantic_dir = os.path.join(output_dir, 'semantics')
-    output_vis_dir = os.path.join(output_dir, 'vis')
-    os.makedirs(output_semantic_dir,exist_ok=True)
-    os.makedirs(output_vis_dir,exist_ok=True)
-    for i, image_name in enumerate(os.listdir(image_dir)):
-        print("Processing the {}/{} images...".format(i, len(os.listdir(image_dir))), end='\r')
-        image_path = os.path.join(image_dir, image_name)
-        gt_path = os.path.join(gt_dir, image_name.replace('.png', '_label.tiff'))
-        img = cv2.imread(image_path)
-        gt = tif.imread(gt_path)
-        H,W,C = img.shape
-        
-        semantic = create_interior_map(gt)
-        semantic[semantic == 1] = 128
-        save_semantic_path = os.path.join(output_semantic_dir, image_name)
-        cv2.imwrite(save_semantic_path, semantic)
-
-        vis = np.zeros_like(gt)
-        vis[gt>0] = 255
-        vis = vis[:,:,np.newaxis]
-        vis = np.concatenate((vis,vis,vis), axis=2)
-        vis_path = os.path.join(output_vis_dir,image_name)
-        vis = np.hstack((img, vis))
-        cv2.imwrite(vis_path, vis)
-    pass
-
-def gen_full_n_weak_heatmap(full_label, weak_label, weak_label_valid, disk_size):
+def gen_full_n_weak_heatmap(full_label, weak_label, weak_label_valid):
     full_label = full_label.astype(np.float32)
-    full_heat = cv2.GaussianBlur(full_label, (disk_size,disk_size), -1)*255
+    full_heat = cv2.GaussianBlur(full_label, (5,5), -1)*255
     
     weak_label[weak_label==255] = 0
-    weak_label = morphology.dilation(weak_label, morphology.disk(disk_size-1))
-    weak_heat = cv2.GaussianBlur(weak_label.astype(np.float32), (disk_size, disk_size), -1)
+    weak_label = morphology.dilation(weak_label, morphology.disk(1))
+    weak_heat = cv2.GaussianBlur(weak_label.astype(np.float32), (5,5), -1)
     weak_heat = weak_heat*weak_label_valid
     weak_heat = weak_heat/np.max(weak_heat)*255
     return full_heat, weak_heat
 
-def gen_weak_n_full_labels(image_dir, semantic_dir, output_dir, image_list, **kwargs):
-    print("Generating the weak and full supervision labels...")
-    output_superpixel_dir = os.path.join(output_dir,'superpixels')
+def change_bg_point_w_fusion(img, semantic, point_dict, distmap):
+    # Set local kernel
+    kernel_size = 5
+    conv_layer = nn.Conv2d(3,3, kernel_size, bias=False).eval()
+    conv_layer.weight = torch.nn.Parameter(torch.ones([3,3,kernel_size,kernel_size]))
+    
+    H,W,C = img.shape
+    # Fuse the local pixels
+    img_conv = conv_layer(torch.tensor(img,dtype=torch.float32).permute(2,0,1).unsqueeze(0)).squeeze(0).permute(1,2,0).detach().numpy()
+    # Cluster the fused pixels with kmeans
+    pixels = img_conv.reshape((-1,3)).astype(np.float32)
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 500, 0.1)
+    K = 10
+    cluster_list = [0,0,0,0,0,0,0,0,0,0]
+    _, labels, centers = cv2.kmeans(pixels, K, None, criteria, 10, cv2.KMEANS_PP_CENTERS)
+    # Reshape the labels and make the label mask
+    labels = labels.reshape((H-(kernel_size-1),W-(kernel_size-1)))
+    labels_mask = np.zeros((H,W),dtype=np.int16)
+    labels_mask[int(kernel_size/2):H-int(kernel_size/2),int(kernel_size/2):W-int(kernel_size/2)] = labels
+    labels = labels_mask
+    # Count the foreground points in each label cluster
+    for point_idx, point_prop in point_dict['foreground'].items():
+        select_point = point_prop['select_point']
+        cluster_idx = labels[select_point[1], select_point[0]]
+        cluster_list[cluster_idx] += 1
+    cluster_sorted_idx = np.argsort(np.array(cluster_list))
+    # Select the 5 clusters with least foreground points as the background pixels
+    bg_cluster = [cluster_sorted_idx[i] for i in range(5)]
+    mask = np.ones((H,W))   # 1 as foreground and 0 as background
+    for bg_idx in bg_cluster:
+        mask[labels==bg_idx] = 0
+    # Morpholopy processing with background mask
+    mask = morphology.opening(mask, morphology.disk(3))
+    mask = morphology.closing(mask, morphology.disk(3))
+    mask = morphology.erosion(mask, morphology.disk(1))
+    # Restrict the mask with distmap
+    distmap[distmap==255]=1
+    mask = mask*distmap
+    mask[:int(kernel_size/2),:] = 1
+    mask[-int(kernel_size/2):,:] = 1
+    mask[:,:int(kernel_size/2)] = 1
+    mask[:,-int(kernel_size/2):] = 1
+    
+    # Check if the original points are in the new mask
+    # ori_bg_dict = {'in_mask':[],'out_mask':[]}
+    # for point_idx, point_prop in point_dict['background'].items():
+    #     point_x = point_prop['x']
+    #     point_y = point_prop['y']
+    #     ori_bg_value = mask[point_y, point_x]
+    #     if ori_bg_value == 1:
+    #         ori_bg_dict['in_mask'].append(point_prop)
+    #     else:
+    #         ori_bg_dict['out_mask'].append(point_prop)
+    # print('Origin points: In mask point:{}. Out of mask point:{}'.format(len(ori_bg_dict['in_mask']), len(ori_bg_dict['out_mask'])))
+        
+    # Select the new background points and check if they are in the semantic foreground
+    bg_point_num = len(list(point_dict['background'].keys()))
+    background_points = []
+    new_bg_dict = {'in_mask':[], 'out_mask':[]}
+    semantic[semantic==128] = 1
+    while len(background_points)<bg_point_num:
+        x = random.randint(0, W-1)
+        y = random.randint(0, H-1)
+        if mask[y][x] == 0:
+            background_points.append([x,y])
+            if semantic[y][x] == 1:
+                new_bg_dict['in_mask'].append([x,y])
+            else:
+                new_bg_dict['out_mask'].append([x,y])
+    # print("New points: In mask point:{}. Out of mask point:{}".format(len(new_bg_dict['in_mask']),len(new_bg_dict['out_mask'])))
+    
+    # Generate the new point dict
+    new_point_dict = {'foreground':point_dict['foreground'], 'background':{}}
+    for ii, point in enumerate(background_points):
+        new_point_dict['background'][str(ii+1)] = {'x':int(point[0]),
+                                                    'y':int(point[1])}
+        
+    return new_point_dict
+
+
+def preprocess_CellSeg(img_dir, gt_dir, output_dir, train=True):
+    print("Preprocessing the CellSeg dataset...")
+    output_img_dir = os.path.join(output_dir, 'images')
+    output_superpixel_dir = os.path.join(output_dir, 'superpixels')
+    output_gt_dir = os.path.join(output_dir, 'gts')
+    output_semantic_dir = os.path.join(output_dir,'semantics')
+    output_vis_dir = os.path.join(output_dir, 'vis')
     output_point_dir = os.path.join(output_dir,'points')
-    output_weak_dir = os.path.join(output_dir, 'labels/weak')
-    output_weak_heat_dir = os.path.join(output_dir, 'labels/weak_heatmap')
-    output_inst_dir = os.path.join(output_dir, 'labels/weak_inst')
-    output_full_dir = os.path.join(output_dir, 'labels/full')
-    output_full_heat_dir = os.path.join(output_dir, 'labels/full_heatmap')
-    os.makedirs(output_superpixel_dir, exist_ok=True)
-    os.makedirs(output_point_dir, exist_ok=True)
-    os.makedirs(output_weak_dir, exist_ok=True)
-    os.makedirs(output_weak_heat_dir, exist_ok=True)
-    os.makedirs(output_inst_dir, exist_ok=True)
-    os.makedirs(output_full_dir, exist_ok=True)
-    os.makedirs(output_full_heat_dir, exist_ok=True)
-    for ii, image_name in enumerate(image_list):
-        print("Generating the {}/{} supervision labels...".format(ii, len(image_list)), end='\r')
-        img = cv2.imread(os.path.join(image_dir, image_name))
-        semantic = cv2.imread(os.path.join(semantic_dir, image_name), flags=0)
-        semantic[semantic==128] = 1
-        point_dict = gen_point_supervision(semantic)
-        superpixel, sp_vis = gen_superpixel_adaptive(img, point_dict)
-        weak_label, instance_dict, weak_label_valid = gen_weak_label_with_point_fb(img, point_dict, superpixel, **kwargs)
-        full_label = gen_full_label_with_semantic(semantic)
-        full_heat, weak_heat = gen_full_n_weak_heatmap(full_label.copy(), weak_label.copy(), weak_label_valid.copy(), **kwargs)
-        # save the mid-results
-        json.dump(point_dict, open(os.path.join(output_point_dir, image_name.replace('.png','.json')), 'w'),indent=2)
-        tif.imwrite(os.path.join(output_superpixel_dir, image_name.replace('.png', '.tiff')), superpixel)
-        cv2.imwrite(os.path.join(output_superpixel_dir, image_name.replace('.png', '_vis.png')), sp_vis)
-        cv2.imwrite(os.path.join(output_weak_dir, image_name), weak_label)
-        cv2.imwrite(os.path.join(output_weak_heat_dir, image_name), weak_heat)
-        cv2.imwrite(os.path.join(output_full_dir, image_name), full_label)
-        cv2.imwrite(os.path.join(output_full_heat_dir, image_name), full_heat)
-        json.dump(instance_dict, open(os.path.join(output_inst_dir, image_name.replace('.png','.json')), 'w'), indent=2)
-    pass
+    output_voronoi_dir = os.path.join(output_dir,'voronois')
+    output_full_label_dir = os.path.join(output_dir,'labels/full')
+    output_full_heatmap_dir = os.path.join(output_dir,'labels/full_heatmap')
+    output_full_dist_dir = os.path.join(output_dir,'labels/full_distmap')
+    output_weak_label_dir = os.path.join(output_dir,'labels/weak')
+    output_weak_heatmap_dir = os.path.join(output_dir,'labels/weak_heatmap')
+    output_weak_dist_dir = os.path.join(output_dir,'labels/weak_distmap')
+    
+    img_names = os.listdir(img_dir)
+    for ii, img_name in enumerate(sorted(img_names)):
+        print("Preprocessing the {}/{} images...".format(ii, len(img_names)), end='\r')
+        # check if done?
+        # if os.path.exists(os.path.join(output_weak_heatmap_dir, img_name)):
+        #     continue
+        img_path = os.path.join(img_dir, img_name)
+        gt_path = os.path.join(gt_dir, img_name.replace('.png','_label.tiff'))
+        
+        img = cv2.imread(img_path)
+        gt = tif.imread(gt_path)
+        
+        # get the semantic segmentation maps
+        semantic = create_interior_map(gt, if_boundary=False)
+        semantic[semantic == 1] = 128
+        semantic[semantic == 2] = 255
+        save_semantic_path = os.path.join(output_semantic_dir,img_name)
+        os.makedirs(os.path.dirname(save_semantic_path), exist_ok=True)
+        cv2.imwrite(save_semantic_path, semantic)
+        
+        # get the visualization
+        # vis = np.zeros_like(gt)
+        # vis[gt>0] = 255
+        # vis = vis[:,:,np.newaxis]
+        # vis = np.concatenate((vis,vis,vis), axis=2)
+        # vis = np.hstack((img, vis))
+        # save_vis_path = os.path.join(output_vis_dir, img_name)
+        # os.makedirs(os.path.dirname(save_vis_path), exist_ok=True)
+        # cv2.imwrite(save_vis_path, vis)
+        
+        if train:
+            # # Generate the initial point supervision
+            # point_dict = gen_point_supervision(gt.copy())
+
+            # # Generate the voronoi images
+            # vor_img = gen_voronoi(semantic.copy(), point_dict)
+            # save_vor_path = os.path.join(output_voronoi_dir, img_name)
+            # os.makedirs(os.path.dirname(save_vor_path), exist_ok=True)
+            # cv2.imwrite(save_vor_path, vor_img)
+            
+            # # Generate the full distmap labels
+            # full_distmap = semantic.copy()
+            # full_distmap[full_distmap==255]=0
+            # full_distmap[full_distmap==128]=255
+            # save_full_distmap_path = os.path.join(output_full_dist_dir, img_name)
+            # os.makedirs(os.path.dirname(save_full_distmap_path),exist_ok=True)
+            # cv2.imwrite(save_full_distmap_path, full_distmap)
+            
+            # # Generate the initial weak distmap labels
+            # weak_distmap = gen_dist_label(img, vor_img, point_dict)
+            
+            # # Re-generate the point supervision with fusion methods
+            # point_dict = change_bg_point_w_fusion(img, semantic.copy(), point_dict, weak_distmap)
+            # save_point_path = os.path.join(output_point_dir, img_name.replace('.png','.json'))
+            # os.makedirs(os.path.dirname(save_point_path), exist_ok=True)
+            # json.dump(point_dict, open(save_point_path,'w'), indent=2)
+                      
+            # # Re-generate the weak distmap labels
+            # weak_distmap = gen_dist_label(img, vor_img, point_dict)
+            # save_weak_distmap_path = os.path.join(output_weak_dist_dir, img_name)
+            # os.makedirs(os.path.dirname(save_weak_distmap_path),exist_ok=True)
+            # cv2.imwrite(save_weak_distmap_path, weak_distmap)
+            
+            # # Generate the superpixels
+            # superpixel, sp_vis = gen_superpixel_adaptive(img, point_dict)
+            # save_superpixel_path = os.path.join(output_superpixel_dir, img_name.replace('.png','.tiff'))
+            # os.makedirs(os.path.dirname(save_superpixel_path), exist_ok=True)
+            # tif.imwrite(save_superpixel_path, superpixel)
+            # save_sp_vis_path = os.path.join(output_superpixel_dir, img_name.replace('.png','_vis.png'))
+            # os.makedirs(os.path.dirname(save_sp_vis_path), exist_ok=True)
+            # cv2.imwrite(save_sp_vis_path, sp_vis)
+
+            # Generate the full label and heatmap   ### REMEBER TO ENABLE THIS WHEN FIRSTLY USED
+            full_label, full_heat = gen_full_label_with_semantic(semantic.copy())
+            save_full_label_path = os.path.join(output_full_label_dir, img_name)
+            os.makedirs(os.path.dirname(save_full_label_path), exist_ok=True)
+            cv2.imwrite(save_full_label_path, full_label)
+            save_full_heat_path = os.path.join(output_full_heatmap_dir, img_name)
+            os.makedirs(os.path.dirname(save_full_heat_path), exist_ok=True)
+            cv2.imwrite(save_full_heat_path, full_heat)
+            
+            # generate the weak label and heatmap
+            # weak_label, instance_dict, weak_label_valid, weak_heat = gen_weak_label_with_point_fb(img, point_dict, superpixel, vor_img.copy())
+            # save_weak_label_path = os.path.join(output_weak_label_dir, img_name)
+            # os.makedirs(os.path.dirname(save_weak_label_path),exist_ok=True)
+            # cv2.imwrite(save_weak_label_path, weak_label)
+            # save_weak_heat_path = os.path.join(output_weak_heatmap_dir, img_name)
+            # os.makedirs(os.path.dirname(save_weak_heat_path),exist_ok=True)
+            # cv2.imwrite(save_weak_heat_path, weak_heat)
 
 if __name__=="__main__":
-    image_dir = './data/NeurIPS2022_CellSeg/images'
-    gt_dir = './data/NeurIPS2022_CellSeg/gts'
-    semantic_dir = './data/NeurIPS2022_CellSeg/semantics'
-    output_dir = './data/NeurIPS2022_CellSeg'
-    kwargs = {"image_list": brightfield_1_list, "disk_size": 5}
-    image_list = brightfield_1_list
-    preprocess_CellSeg(image_dir, gt_dir,  output_dir)
-    gen_weak_n_full_labels(image_dir, semantic_dir, output_dir, **kwargs)
-    pass
+    img_dir = './data/CellSeg/images'
+    gt_dir = './data/CellSeg/gts'
+    output_dir = './data/CellSeg'
+    preprocess_CellSeg(img_dir, gt_dir, output_dir, train=True)
+    
+    
