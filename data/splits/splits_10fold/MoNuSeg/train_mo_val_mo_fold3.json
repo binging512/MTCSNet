@@ -1,0 +1,306 @@
+{
+  "train": [
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-B0-5711-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-B0-5711-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-B0-5711-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-B0-5711-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-B0-5711-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-B0-5711-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-B0-5711-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-B0-5711-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-A7-A13E-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-A7-A13E-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-A7-A13E-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-A7-A13E-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-A7-A13E-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-A7-A13E-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-A7-A13E-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-A7-A13E-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-AR-A1AK-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-AR-A1AK-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-AR-A1AK-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-AR-A1AK-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-AR-A1AK-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-AR-A1AK-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-AR-A1AK-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-AR-A1AK-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-UZ-A9PN-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-UZ-A9PN-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-UZ-A9PN-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-UZ-A9PN-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-UZ-A9PN-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-UZ-A9PN-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-UZ-A9PN-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-UZ-A9PN-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-RD-A8N9-01A-01-TS1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-RD-A8N9-01A-01-TS1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-RD-A8N9-01A-01-TS1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-RD-A8N9-01A-01-TS1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-RD-A8N9-01A-01-TS1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-RD-A8N9-01A-01-TS1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-RD-A8N9-01A-01-TS1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-RD-A8N9-01A-01-TS1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-50-5931-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-50-5931-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-50-5931-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-50-5931-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-50-5931-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-50-5931-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-50-5931-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-50-5931-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-KB-A93J-01A-01-TS1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-KB-A93J-01A-01-TS1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-KB-A93J-01A-01-TS1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-KB-A93J-01A-01-TS1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-KB-A93J-01A-01-TS1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-KB-A93J-01A-01-TS1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-KB-A93J-01A-01-TS1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-KB-A93J-01A-01-TS1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-G2-A2EK-01A-02-TSB.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-G2-A2EK-01A-02-TSB.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-G2-A2EK-01A-02-TSB.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-G2-A2EK-01A-02-TSB.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-G2-A2EK-01A-02-TSB.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-G2-A2EK-01A-02-TSB.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-G2-A2EK-01A-02-TSB.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-G2-A2EK-01A-02-TSB.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-B0-5710-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-B0-5710-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-B0-5710-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-B0-5710-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-B0-5710-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-B0-5710-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-B0-5710-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-B0-5710-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-UZ-A9PJ-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-UZ-A9PJ-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-UZ-A9PJ-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-UZ-A9PJ-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-UZ-A9PJ-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-UZ-A9PJ-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-UZ-A9PJ-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-UZ-A9PJ-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-49-4488-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-49-4488-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-49-4488-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-49-4488-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-49-4488-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-49-4488-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-49-4488-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-49-4488-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-A7-A13F-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-A7-A13F-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-A7-A13F-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-A7-A13F-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-A7-A13F-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-A7-A13F-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-A7-A13F-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-A7-A13F-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-G9-6336-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-G9-6336-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-G9-6336-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-G9-6336-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-G9-6336-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-G9-6336-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-G9-6336-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-G9-6336-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-NH-A8F7-01A-01-TS1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-NH-A8F7-01A-01-TS1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-NH-A8F7-01A-01-TS1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-NH-A8F7-01A-01-TS1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-NH-A8F7-01A-01-TS1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-NH-A8F7-01A-01-TS1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-NH-A8F7-01A-01-TS1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-NH-A8F7-01A-01-TS1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-38-6178-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-38-6178-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-38-6178-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-38-6178-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-38-6178-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-38-6178-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-38-6178-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-38-6178-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-AR-A1AS-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-AR-A1AS-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-AR-A1AS-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-AR-A1AS-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-AR-A1AS-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-AR-A1AS-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-AR-A1AS-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-AR-A1AS-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-21-5784-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-21-5784-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-21-5784-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-21-5784-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-21-5784-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-21-5784-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-21-5784-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-21-5784-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-G9-6356-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-G9-6356-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-G9-6356-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-G9-6356-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-G9-6356-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-G9-6356-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-G9-6356-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-G9-6356-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-CH-5767-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-CH-5767-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-CH-5767-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-CH-5767-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-CH-5767-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-CH-5767-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-CH-5767-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-CH-5767-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-18-5592-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-18-5592-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-18-5592-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-18-5592-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-18-5592-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-18-5592-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-18-5592-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-18-5592-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-F9-A8NY-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-F9-A8NY-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-F9-A8NY-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-F9-A8NY-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-F9-A8NY-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-F9-A8NY-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-F9-A8NY-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-F9-A8NY-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-HE-7130-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-HE-7130-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-HE-7130-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-HE-7130-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-HE-7130-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-HE-7130-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-HE-7130-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-HE-7130-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-DK-A2I6-01A-01-TS1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-DK-A2I6-01A-01-TS1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-DK-A2I6-01A-01-TS1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-DK-A2I6-01A-01-TS1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-DK-A2I6-01A-01-TS1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-DK-A2I6-01A-01-TS1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-DK-A2I6-01A-01-TS1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-DK-A2I6-01A-01-TS1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-G9-6348-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-G9-6348-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-G9-6348-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-G9-6348-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-G9-6348-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-G9-6348-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-G9-6348-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-G9-6348-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-G9-6362-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-G9-6362-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-G9-6362-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-G9-6362-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-G9-6362-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-G9-6362-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-G9-6362-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-G9-6362-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-21-5786-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-21-5786-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-21-5786-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-21-5786-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-21-5786-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-21-5786-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-21-5786-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-21-5786-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-HE-7129-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-HE-7129-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-HE-7129-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-HE-7129-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-HE-7129-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-HE-7129-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-HE-7129-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-HE-7129-01Z-00-DX1.json"
+    }
+  ],
+  "val": [
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-G9-6363-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-G9-6363-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-G9-6363-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-G9-6363-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-G9-6363-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-G9-6363-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-G9-6363-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-G9-6363-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-XS-A8TJ-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-XS-A8TJ-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-XS-A8TJ-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-XS-A8TJ-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-XS-A8TJ-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-XS-A8TJ-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-XS-A8TJ-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-XS-A8TJ-01Z-00-DX1.json"
+    },
+    {
+      "img_path": "./data/MoNuSeg/train/images/TCGA-BC-A217-01Z-00-DX1.tif",
+      "gt_path": "./data/MoNuSeg/train/gts/TCGA-BC-A217-01Z-00-DX1.tif",
+      "full_label_path": "./data/MoNuSeg/train/labels/full/TCGA-BC-A217-01Z-00-DX1.png",
+      "full_heat_path": "./data/MoNuSeg/train/labels/full_heatmap/TCGA-BC-A217-01Z-00-DX1.png",
+      "weak_label_path": "./data/MoNuSeg/train/labels/weak/TCGA-BC-A217-01Z-00-DX1.png",
+      "weak_heat_path": "./data/MoNuSeg/train/labels/weak_heatmap/TCGA-BC-A217-01Z-00-DX1.png",
+      "semantic_path": "./data/MoNuSeg/train/semantics/TCGA-BC-A217-01Z-00-DX1.png",
+      "point_path": "./data/MoNuSeg/train/points/TCGA-BC-A217-01Z-00-DX1.json"
+    }
+  ]
+}
