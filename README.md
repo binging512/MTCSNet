@@ -8,7 +8,7 @@ This the code of the paper: [TBD]
 - Four kinds of labels are generated and five different sub-tasks are elaborately proposed to jointly optimize the MTCSNet.
 - Experiments on six public datasets, namely MoNuSeg, TNBC, CPM-17, PanNuke, Lizard and CellSeg, indicate that MTCSNet outperforms all state-of-the-art weakly supervised learning methods.
 
-![](.\images\framework_v5.png)
+![](./images/framework_v5.png)
 
 ## Instructions
 
