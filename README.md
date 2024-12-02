@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This the code of the paper: MTCSNet: One-stage learning and two-point labeling are sufficient for cell  segmentation. IEEE Transactions on Medical Imaging, 2024.
+This the code of the paper: [Paper](https://ieeexplore.ieee.org/abstract/document/10537224)
 
 - MTCSNet is trained in a one-stage manner with only two annotated points for each cell instead of pixel-level annotations.
 - Four kinds of labels are generated and five different sub-tasks are elaborately proposed to jointly optimize the MTCSNet.
