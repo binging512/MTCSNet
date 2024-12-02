@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This the code of the paper: [TBD]
+This the code of the paper: MTCSNet: One-stage learning and two-point labeling are sufficient for cell  segmentation. IEEE Transactions on Medical Imaging, 2024.
 
 - MTCSNet is trained in a one-stage manner with only two annotated points for each cell instead of pixel-level annotations.
 - Four kinds of labels are generated and five different sub-tasks are elaborately proposed to jointly optimize the MTCSNet.
@@ -224,8 +224,12 @@ CUDA_VISIBLE_DEVICES=0 bash scripts/MoNuSeg_ablation.sh
 ## Citation
 
 ```latex
-
+@article{zhang2024mtcsnet,
+  title={MTCSNet: One-stage learning and two-point labeling are sufficient for cell segmentation},
+  author={Zhang, Binyu and Meng, Zhu and Li, Hongyuan and Zhao, Zhicheng and Su, Fei},
+  journal={IEEE Transactions on Medical Imaging},
+  year={2024},
+  publisher={IEEE}
+}
 ```
-
-
 
